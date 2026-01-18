@@ -38,9 +38,6 @@ mlflow.db-journal
 
 # Models and Pickles
 models/*.pkl
-!models/captcha_svm_model.pkl
-!models/label_encoder.pkl
-!models/scaler.pkl
 *.h5
 *.joblib
 

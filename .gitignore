@@ -48,8 +48,6 @@ models/*.pkl
 app/uploads/*
 !app/uploads/.gitkeep
 app/__pycache__/
-model_logic.py
-main.py
 update_nb.py
 fix_joblib.py
 clean_nb.py

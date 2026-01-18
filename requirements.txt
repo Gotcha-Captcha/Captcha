@@ -1,0 +1,16 @@
+# Core ML & Data Science
+kagglehub
+numpy
+matplotlib
+joblib
+scikit-learn
+scikit-image
+
+# Tracking & Deployment
+mlflow
+pyngrok
+
+# Jupyter & VS Code Integration
+ipykernel
+jupyter
+notebook

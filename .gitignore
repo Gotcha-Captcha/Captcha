@@ -28,8 +28,8 @@ python-*.log
 # Jupyter Notebook
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
-*.ipynb
-!captcha.ipynb
+notebooks/*.ipynb
+!notebooks/captcha.ipynb
 
 # MLflow
 mlruns/
@@ -37,9 +37,22 @@ mlflow.db
 mlflow.db-journal
 
 # Models and Pickles
-*.pkl
+models/*.pkl
+!models/captcha_svm_model.pkl
+!models/label_encoder.pkl
+!models/scaler.pkl
 *.h5
 *.joblib
+
+# Project Specific
+app/uploads/*
+!app/uploads/.gitkeep
+app/__pycache__/
+model_logic.py
+main.py
+update_nb.py
+fix_joblib.py
+clean_nb.py
 
 # OS
 .DS_Store

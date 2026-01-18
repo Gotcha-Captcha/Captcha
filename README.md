@@ -24,13 +24,28 @@ The project uses a `LinearSVC` model for its efficiency and strong generalizatio
 - **Method**: Measures the distribution of gradient directions within localized regions.
 - **Why HOG?**: Focuses on the "outline shape" and "structure" of characters rather than pixel values, making it robust against lighting variations and noise.
 
+## Project Structure
+
+```text
+Captcha/
+├── app/                # FastAPI Web Server
+│   ├── main.py         # Entry point & Endpoints
+│   ├── model_logic.py  # Core ML & Preprocessing
+│   ├── templates/      # Dashboard (UI)
+│   └── uploads/        # Temp Storage for Analysis
+├── models/             # Trained Weights (.pkl)
+├── notebooks/          # Research & Experimentation
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
+
 ## Tech Stack
 
-- **Language**: Python 3.x
-- **Development Environment**: Jupyter Notebook
-- **Machine Learning**: Scikit-learn
+- **Backend**: FastAPI, Uvicorn, WebSockets
+- **Frontend**: Vanilla CSS (Glassmorphism), JavaScript
+- **ML**: Scikit-learn (LinearSVC + HOG)
 - **Experiment Tracking**: MLflow
-- **Image Processing**: OpenCV / Scikit-image
 
 ## Getting Started
 
@@ -38,12 +53,9 @@ The project uses a `LinearSVC` model for its efficiency and strong generalizatio
 Ensure you have Python installed. It is recommended to use a virtual environment.
 
 ```bash
-# Create a virtual environment
+# Create and activate virtual environment
 python -m venv .venv
-
-# Activate the virtual environment
-source .venv/bin/activate  # On macOS/Linux
-# .venv\Scripts\activate     # On Windows
+source .venv/bin/activate
 ```
 
 ### 2. Install Dependencies
@@ -52,18 +64,21 @@ pip install -r requirements.txt
 ```
 
 ### 3. Usage
-Open the Jupyter Notebook and execute the cells:
+
+#### Demo Web Server
+To launch the interactive dashboard:
 ```bash
+# Run from the project root
+uvicorn app.main:app --reload
+```
+Visit http://127.0.0.1:8000 to use the premium Analysis Dashboard.
+
+#### Research Notebook
+To run experiments:
+```bash
+cd notebooks
 jupyter notebook captcha.ipynb
 ```
 
-### 4. Experiment Tracking
-Experiments are tracked using MLflow. To view the results:
-```bash
-mlflow ui --port 5001
-```
-
 ## Results & Models
-The trained models are saved as pickle files:
-- `captcha_svm_model.pkl`: The trained LinearSVC model.
-- `label_encoder.pkl`: Encoder for character labels.
+The models are stored in the `/models` directory using `joblib` (.pkl).

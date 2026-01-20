@@ -9,66 +9,105 @@ from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 from skimage.feature import hog
 from skimage.transform import resize
-from skimage.morphology import opening, footprint_rectangle
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler
+from skimage.morphology import opening, footprint_rectangle, remove_small_objects
 
 # ============================
 # Core Logic
 # ============================
 
-def preprocess_image_v2(img):
+def preprocess_image_v3(img):
     if img.ndim == 3 and img.shape[2] == 4:
         img = img[..., :3]
     img_gray = rgb2gray(img)
     img_resized = resize(img_gray, (50, 200))
+    
+    # Global Otsu is more stable if background is relatively flat
     thresh = threshold_otsu(img_resized)
     img_bin = img_resized > thresh
-    if np.mean(img_bin[0, :]) < 0.5:
-        img_bin = ~img_bin
     
-    # Text is currently 0 (black), Background is 1 (white)
-    binary_inv = 1 - img_bin
+    # Better background detection: Sample the 4 corners
+    corners = [img_bin[0,0], img_bin[0,-1], img_bin[-1,0], img_bin[-1,-1]]
+    if np.mean(corners) < 0.5: # 0 is black, 1 is white. If corners are dark, background is 0.
+        # Background is dark, text is light. We want text=1.
+        img_inv = img_bin.astype(np.uint8)
+    else:
+        # Background is light, text is dark. We want text=1.
+        img_inv = (1 - img_bin).astype(np.uint8)
     
-    # 1. Specialized Noise Line Removal using Morphological Kernels
-    # Remove horizontal lines
-    hor_kernel = footprint_rectangle((1, 5))
-    hor_noise = opening(binary_inv, hor_kernel)
+    # Clean up random noise points
+    img_cleaned = opening(img_inv, footprint_rectangle((2, 2)))
+    img_cleaned = remove_small_objects(img_cleaned.astype(bool), max_size=20).astype(np.uint8)
     
-    # Remove vertical lines
-    ver_kernel = footprint_rectangle((5, 1))
-    ver_noise = opening(binary_inv, ver_kernel)
-    
-    # Subtract noise but keep characters
-    # (Simplified: just generic opening with a small square is often safer for characters)
-    img_cleaned = opening(binary_inv, footprint_rectangle((2, 2))) 
-    
-    return 1 - img_cleaned
+    return img_cleaned
 
 def extract_hog_features(img_binary: np.ndarray) -> np.ndarray:
+    # Using 4x4 cells provides much more detail for small character images (32x32)
     features = hog(
         img_binary,
         orientations=9,
-        pixels_per_cell=(4, 4), # Increased granularity from (8,8) to (4,4)
+        pixels_per_cell=(4, 4),
         cells_per_block=(2, 2),
         block_norm="L2-Hys",
         transform_sqrt=True
     )
     return features
 
-def segment_characters(img_bin, num_chars=5):
-    h, w = img_bin.shape
-    char_width = w // num_chars
+def segment_characters_v2(img_cleaned, num_chars=5):
+    """
+    Uses vertical projection with adjusted threshold and split logic.
+    """
+    projection = np.sum(img_cleaned, axis=0)
+    # Threshold for finding gaps
+    threshold = np.max(projection) * 0.1
+    is_char = projection > threshold
+    
+    char_indices = []
+    in_char = False
+    start = 0
+    for i, val in enumerate(is_char):
+        if val and not in_char:
+            start = i
+            in_char = True
+        elif not val and in_char:
+            width = i - start
+            if width >= 2:
+                # Optimized ligature splitting: average width is ~30-40
+                if width > 50:
+                    num_splits = round(width / 32)
+                    split_w = width / num_splits
+                    for s in range(num_splits):
+                        char_indices.append((int(start + s*split_w), int(start + (s+1)*split_w)))
+                else:
+                    char_indices.append((start, i))
+            in_char = False
+    if in_char:
+        char_indices.append((start, len(is_char)))
+
     characters = []
-    for i in range(num_chars):
-        start = i * char_width
-        end = (i + 1) * char_width
-        char_img = img_bin[:, start:end]
+    for (start, end) in char_indices[:num_chars]:
+        char_img = img_cleaned[:, start:end]
+        h, w = char_img.shape
+        if h == 0 or w == 0: continue
+        
+        # Add padding to make it square to maintain aspect ratio
+        diff = abs(h - w)
+        p1, p2 = diff // 2, diff - (diff // 2)
+        if h > w:
+            char_img = np.pad(char_img, ((0, 0), (p1, p2)), mode='constant')
+        else:
+            char_img = np.pad(char_img, ((p1, p2), (0, 0)), mode='constant')
+            
         char_img_resized = resize(char_img, (32, 32))
         characters.append(char_img_resized)
+    
+    # Fill remaining with empty if needed
+    while len(characters) < num_chars:
+        characters.append(np.zeros((32, 32)))
+        
     return characters
 
 # ============================
@@ -87,8 +126,8 @@ def predict_captcha(image_path: str):
         scaler = joblib.load(scaler_path)
         
         img = imread(image_path)
-        img_bin = preprocess_image_v2(img)
-        char_images = segment_characters(img_bin, num_chars=5)
+        img_cleaned = preprocess_image_v3(img)
+        char_images = segment_characters_v2(img_cleaned, num_chars=5)
         
         predicted_text = ""
         for char_img in char_images:
@@ -131,8 +170,8 @@ async def train_model_async(images_dir, progress_callback):
 
         try:
             img = imread(str(path))
-            img_bin = preprocess_image_v2(img)
-            char_images = segment_characters(img_bin, num_chars=5)
+            img_cleaned = preprocess_image_v3(img)
+            char_images = segment_characters_v2(img_cleaned, num_chars=5)
             label_text = path.stem
             
             if len(char_images) == len(label_text):
@@ -161,7 +200,7 @@ async def train_model_async(images_dir, progress_callback):
     X_test_scaled = scaler.transform(X_test)
     
     # RBF Kernel SVM for better non-linear separation
-    model = SVC(kernel='rbf', C=10.0, gamma='scale', random_state=42)
+    model = SVC(kernel='rbf', C=2.481, gamma='scale', class_weight='balanced', random_state=42)
     model.fit(X_train_scaled, y_train)
     
     y_pred = model.predict(X_test_scaled)

@@ -57,3 +57,8 @@ clean_nb.py
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Debug
+debug_output/
+
+uploads/

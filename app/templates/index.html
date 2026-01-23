@@ -1,443 +1,476 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gotcha! | CAPTCHA Analysis Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>AI ReCaptcha Solver Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "accent-green": "#00ff41",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#0a0c12",
+                        "surface-dark": "#161b26",
+                        "border-dark": "#282e39",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text: #f8fafc;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
-        }
-
         body {
-            background-color: var(--bg);
-            background-image:
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0, transparent 50%);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            overflow: hidden;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
-        /* Side Dashboard */
-        .sidebar {
-            width: 360px;
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid var(--glass-border);
-            padding: 3rem 2.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-            z-index: 10;
+        .terminal-scroll::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .logo {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: #0a0c12;
         }
 
-        .metrics-card {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.5rem;
-            padding: 1.8rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 4px;
         }
 
-        .metric-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 0.8rem 0;
-            gap: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .metric-item:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-
-        .metric-label {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            font-weight: 400;
-        }
-
-        .metric-value {
-            font-weight: 600;
-            color: var(--text);
-            font-size: 0.9rem;
-        }
-
-        .badge {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 4rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .hero {
-            max-width: 800px;
-        }
-
-        .hero h1 {
-            font-size: 4rem;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 1rem;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-        }
-
-        .hero p {
-            color: #94a3b8;
-            text-align: center;
-            font-size: 1.2rem;
-            line-height: 1.6;
-        }
-
-        /* Upload Area */
-        .drop-zone {
+        .scanner-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff41, transparent);
+            box-shadow: 0 0 15px #00ff41;
+            position: absolute;
             width: 100%;
-            max-width: 700px;
-            height: 350px;
-            border: 2px dashed var(--glass-border);
-            background: var(--glass);
-            border-radius: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            padding: 2rem;
-        }
-
-        .drop-zone:hover {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.08);
-            transform: translateY(-8px) scale(1.01);
-            box-shadow: 0 30px 60px -12px rgba(99, 102, 241, 0.2);
-        }
-
-        .drop-zone.active {
-            border-color: var(--secondary);
-            background: rgba(236, 72, 153, 0.08);
-        }
-
-        .drop-zone img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 1.5rem;
+            top: 0;
+            z-index: 10;
             display: none;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: scan 2s linear infinite;
         }
 
-        .drop-zone-text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            color: #94a3b8;
+        @keyframes scan {
+            from {
+                top: 0%
+            }
+
+            to {
+                top: 100%
+            }
         }
 
-        .icon-upload {
-            font-size: 4rem;
-            margin-bottom: 0.5rem;
+        .typing-cursor {
+            border-right: 2px solid #4d90fe;
+            animation: blink 0.7s infinite;
         }
 
-        /* Result Area */
-        .result-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            margin-top: 1rem;
-        }
+        @keyframes blink {
 
-        .result-container.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .predicted-label {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .predicted-text {
-            font-size: 4rem;
-            font-weight: 800;
-            color: var(--text);
-            background: linear-gradient(135deg, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Training Center */
-        .training-center {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 400px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .training-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-train {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn-train:hover {
-            transform: scale(1.02);
-            box-shadow: 0 15px 20px -3px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-train:disabled {
-            background: #475569;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .progress-container {
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.3s ease;
-        }
-
-        .status-text {
-            font-size: 0.85rem;
-            color: #94a3b8;
-        }
-
-        /* Animations */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
+            from,
+            to {
+                border-color: transparent
             }
 
             50% {
-                transform: scale(1.05);
+                border-color: #4d90fe
             }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .analyzing {
-            animation: pulse 1.5s infinite ease-in-out;
         }
     </style>
 </head>
 
-<body>
-    <div class="sidebar">
-        <div class="logo">Gotcha!</div>
-
-        <div class="metrics-card">
-            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Research Metrics</h3>
-            <div class="metric-item">
-                <span class="metric-label">Model Accuracy</span>
-                <span class="metric-value">{{ metrics.accuracy }}</span>
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col">
+    <!-- TopNavBar -->
+    <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-background-dark px-10 py-3 z-30">
+        <div class="flex items-center gap-4 text-white">
+            <div class="size-6 text-primary">
+                <svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z"
+                        fill="currentColor"></path>
+                </svg>
             </div>
-            <div class="metric-item">
-                <span class="metric-label">Char Accuracy</span>
-                <span class="metric-value">{{ metrics.char_accuracy }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">Model Type</span>
-                <span class="metric-value">{{ metrics.type }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">Loss Function</span>
-                <span class="metric-value">{{ metrics.loss }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">Features</span>
-                <span class="metric-value">{{ metrics.features }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">Preprocessing</span>
-                <span class="metric-value">{{ metrics.preprocessing }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">Status</span>
-                <span class="badge" id="metrics-status">Pre-trained</span>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-tight">Gotcha! <span
+                    class="text-primary">v2.0</span></h2>
+            <span
+                class="ml-4 px-2 py-0.5 rounded bg-accent-green/10 text-accent-green text-xs font-mono border border-accent-green/20">FastAPI:
+                ONLINE</span>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <div class="flex gap-3">
+                <button
+                    class="flex items-center justify-center rounded-lg h-10 w-10 bg-surface-dark border border-border-dark text-white hover:bg-border-dark transition-colors">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                </button>
             </div>
         </div>
+    </header>
 
-        <div style="flex: 1;"></div>
+    <div class="flex flex-1 overflow-hidden">
+        <!-- SideNavBar / Control Panel -->
+        <aside
+            class="w-80 bg-surface-dark border-r border-border-dark flex flex-col justify-between p-6 overflow-y-auto">
+            <div class="flex flex-col gap-8">
+                <div>
+                    <h1 class="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Model Metrics
+                    </h1>
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
+                            <div class="flex flex-col gap-1">
+                                <p class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Word Accuracy
+                                </p>
+                                <span class="text-primary text-lg font-bold">{{ metrics.accuracy }}</span>
+                            </div>
+                            <p class="text-[10px] text-[#475569] mt-2 leading-tight">Entire 5-character sequence must be
+                                perfect. One wrong letter = 0% success.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
+                            <div class="flex flex-col gap-1">
+                                <p class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Character
+                                    Accuracy</p>
+                                <span class="text-accent-green text-lg font-bold">{{ metrics.char_accuracy }}</span>
+                            </div>
+                            <p class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters
+                                correctly recognized across all samples.</p>
+                        </div>
+                    </div>
+                </div>
 
-        <p style="font-size: 0.8rem; color: #475569;">© 2026 Captcha-Recognition Project</p>
+                <div class="flex flex-col gap-4">
+                    <p class="text-white text-xs font-bold uppercase tracking-widest mb-2 opacity-50">System Info</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#9da6b9]">Status</span>
+                            <span class="text-accent-green font-medium">Pre-trained</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#9da6b9]">Architecture</span>
+                            <span class="text-white font-medium">{{ metrics.type }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#9da6b9]">Loss Function</span>
+                            <span class="text-white font-medium">{{ metrics.loss }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-border-dark">
+                <p class="text-[10px] text-[#475569] text-center">© 2026 Captcha-Recognition Project</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col bg-background-dark overflow-y-auto">
+            <!-- Page Heading -->
+            <div class="flex flex-wrap justify-between items-center gap-3 p-8 border-b border-border-dark/50">
+                <div class="flex flex-col gap-1">
+                    <p class="text-white text-3xl font-black leading-tight tracking-tight">AI ReCaptcha Solver</p>
+                    <p class="text-[#9da6b9] text-sm font-normal">Native CRNN+CTC Simulation Feed</p>
+                </div>
+                <div class="flex gap-3">
+                    <span
+                        class="px-3 py-1.5 rounded-lg bg-surface-dark border border-border-dark text-accent-green text-xs font-mono"
+                        id="main-status">
+                        READY
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-8 space-y-8">
+                <!-- Main Layout Split -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Challenge Feed -->
+                    <div class="lg:col-span-7 flex flex-col gap-6">
+                        <!-- Tab System -->
+                        <div class="flex gap-2 p-1 bg-surface-dark rounded-lg border border-border-dark w-fit">
+                            <button id="tab-v1"
+                                class="px-4 py-2 rounded-md bg-primary text-white text-xs font-bold transition-all">v1:
+                                Text Captcha</button>
+                            <button id="tab-v2"
+                                class="px-4 py-2 rounded-md text-[#9da6b9] text-xs font-bold hover:text-white transition-all relative">
+                                v2: Image Select
+                                <span
+                                    class="absolute -top-2 -right-2 px-1.5 py-0.5 bg-accent-green text-black text-[8px] font-black rounded uppercase">Soon</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-white text-xl font-bold tracking-tight flex items-center gap-2">
+                                <span class="relative flex h-2 w-2">
+                                    <span
+                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                </span>
+                                Active Challenge
+                            </h2>
+                            <button id="refresh-challenge"
+                                class="text-xs font-mono text-primary hover:text-white transition-colors flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">refresh</span> REGENERATE
+                            </button>
+                        </div>
+
+                        <div id="challenge-container"
+                            class="relative bg-surface-dark rounded-xl border border-border-dark shadow-inner overflow-hidden min-h-[140px] flex items-center justify-center p-4 group">
+                            <div
+                                class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent">
+                            </div>
+                            <img id="challenge-img" src=""
+                                class="h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(19,91,236,0.3)] z-10"
+                                alt="Challenge" />
+                            <div id="scanner" class="scanner-line z-20"></div>
+                        </div>
+
+                        <!-- Solver Controls -->
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-6 space-y-4">
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-end">
+                                    <label class="text-[10px] font-bold text-[#9da6b9] uppercase tracking-widest">Input
+                                        Buffer</label>
+                                    <span id="solver-status" class="text-[10px] text-accent-green font-mono">IDLE</span>
+                                </div>
+                                <input type="text" id="captcha-solve-input"
+                                    class="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-4 text-white text-4xl font-black tracking-[0.3em] focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-border-dark"
+                                    placeholder="-----">
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button id="btn-auto-solve"
+                                    class="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-lg text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                                    <span class="material-symbols-outlined">psychology</span>
+                                    AI AUTO-SOLVE
+                                </button>
+                                <button id="btn-verify-solve"
+                                    class="flex-1 flex items-center justify-center gap-2 bg-accent-green text-black px-6 py-4 rounded-lg text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-accent-green/20">
+                                    <span class="material-symbols-outlined">verified</span>
+                                    VERIFY & SUBMIT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Log Terminal -->
+                    <div class="lg:col-span-5 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-white text-xl font-bold tracking-tight">System Terminal</h2>
+                            <button id="clear-terminal"
+                                class="text-[10px] font-bold text-[#9da6b9] uppercase hover:text-white transition-colors">Clear</button>
+                        </div>
+                        <div
+                            class="flex-1 bg-background-dark border border-border-dark rounded-xl overflow-hidden flex flex-col min-h-[500px]">
+                            <div
+                                class="bg-surface-dark px-4 py-2 border-b border-border-dark flex items-center justify-between">
+                                <div class="flex gap-1.5">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                                    <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                                </div>
+                                <span class="text-[10px] font-mono text-[#9da6b9]">root@gotcha-ai: ~/session/logs</span>
+                            </div>
+                            <div id="terminal-content"
+                                class="flex-1 p-4 font-mono text-[11px] space-y-2 overflow-y-auto terminal-scroll">
+                                <p class="text-accent-green font-bold">>> Gotcha! AI System Started</p>
+                                <p class="text-[#9da6b9]">>> Model Status: {{ status }}</p>
+                                <p class="text-[#9da6b9]">>> Simulation Environment: READY</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="main-content">
-        <div class="hero">
-            <h1>Analyze Captcha</h1>
-            <p>Upload a CAPTCHA image and let the CRNN+CTC model recognize it.</p>
-        </div>
 
-        <div class="drop-zone" id="drop-zone">
-            <input type="file" id="file-input" hidden accept="image/*">
-            <div class="drop-zone-text" id="drop-text">
-                <span class="icon-upload">📁</span>
-                <span>Click or Drag & Drop image here</span>
+    <!-- Status Bar -->
+    <footer class="bg-surface-dark border-t border-border-dark px-6 py-2 flex items-center justify-between z-30">
+        <div class="flex items-center gap-6 text-[10px] font-mono text-[#9da6b9]">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent-green shadow-[0_0_5px_#00ff41]"></span>
+                ENGINE: ACTIVE
             </div>
-            <img id="preview-img" src="" alt="Preview">
+            <div class="hidden md:flex items-center gap-2 border-l border-border-dark pl-6">
+                <span class="material-symbols-outlined text-[12px]">memory</span>
+                INFERENCE UNIT: GPU-0
+            </div>
         </div>
-
-        <div class="result-container" id="result-container">
-            <span class="predicted-label">Analysis Result</span>
-            <div class="predicted-text" id="prediction-text">2b7wD</div>
+        <div class="text-[10px] font-mono text-primary font-bold">
+            BUILD: v2.0.4-STABLE
         </div>
-    </div>
+    </footer>
 
     <script>
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const previewImg = document.getElementById('preview-img');
-        const dropText = document.getElementById('drop-text');
-        const resultContainer = document.getElementById('result-container');
-        const predictionText = document.getElementById('prediction-text');
+        // DOM Elements
+        const terminalContent = document.getElementById('terminal-content');
+        const clearTerminal = document.getElementById('clear-terminal');
+        const mainStatus = document.getElementById('main-status');
 
-        // --- Drag & Drop ---
-        dropZone.onclick = () => fileInput.click();
+        const challengeImg = document.getElementById('challenge-img');
+        const captchaInput = document.getElementById('captcha-solve-input');
+        const btnAutoSolve = document.getElementById('btn-auto-solve');
+        const btnVerify = document.getElementById('btn-verify-solve');
+        const refreshChallenge = document.getElementById('refresh-challenge');
+        const solverStatus = document.getElementById('solver-status');
+        const scanner = document.getElementById('scanner');
 
-        dropZone.ondragover = (e) => {
-            e.preventDefault();
-            dropZone.classList.add('active');
-        };
+        const tabV1 = document.getElementById('tab-v1');
+        const tabV2 = document.getElementById('tab-v2');
 
-        dropZone.ondragleave = () => dropZone.classList.remove('active');
+        let currentChallengeId = null;
 
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('active');
-            const file = e.dataTransfer.files[0];
-            handleFile(file);
-        };
+        // Helper: Log to terminal
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const p = document.createElement('p');
+            const typeColor = type === 'success' ? 'text-accent-green' : type === 'error' ? 'text-red-500' : 'text-primary';
+            p.innerHTML = `<span class="text-[#9da6b9]">[${time}]</span> <span class="${typeColor} font-bold">${type.toUpperCase()}:</span> ${msg}`;
+            terminalContent.appendChild(p);
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
 
-        fileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            handleFile(file);
-        };
+        clearTerminal.onclick = () => terminalContent.innerHTML = '<p class="text-accent-green font-bold">>> Console session cleared</p>';
 
-        async function handleFile(file) {
-            if (!file) return;
-
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
-                previewImg.style.display = 'block';
-                dropText.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-
-            // Analyze
-            resultContainer.classList.remove('show');
-            dropZone.classList.add('analyzing');
-
-            const formData = new FormData();
-            formData.append('file', file);
+        // --- Challenge Logic ---
+        async function loadChallenge() {
+            log('Requesting new challenge from dataset...');
+            scanner.style.display = 'block';
+            mainStatus.innerText = 'FETCHING';
+            mainStatus.classList.add('text-yellow-500');
 
             try {
-                const response = await fetch('/predict', {
+                const response = await fetch('/api/challenge');
+                const data = await response.json();
+
+                challengeImg.src = data.image;
+                currentChallengeId = data.challenge_id;
+                captchaInput.value = "";
+                solverStatus.innerText = "READY";
+                solverStatus.classList.remove('text-red-500');
+
+                log(`Challenge loaded: ${currentChallengeId}`, 'success');
+            } catch (err) {
+                log(`Failed to load challenge: ${err.message}`, 'error');
+            } finally {
+                scanner.style.display = 'none';
+                mainStatus.innerText = 'READY';
+                mainStatus.classList.remove('text-yellow-500');
+            }
+        }
+
+        refreshChallenge.onclick = loadChallenge;
+
+        btnAutoSolve.onclick = async () => {
+            if (!currentChallengeId) return;
+
+            btnAutoSolve.disabled = true;
+            log('Initializing AI solving unit...', 'info');
+            solverStatus.innerText = "ANALYZING...";
+            mainStatus.innerText = 'SOLVING';
+
+            try {
+                const response = await fetch('/api/solve', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challenge_id: currentChallengeId })
                 });
                 const data = await response.json();
 
-                predictionText.innerText = data.prediction;
-                resultContainer.classList.add('show');
+                // Typing effect
+                captchaInput.value = "";
+                captchaInput.classList.add('typing-cursor');
+                const text = data.prediction;
+                for (let i = 0; i < text.length; i++) {
+                    captchaInput.value += text[i];
+                    await new Promise(r => setTimeout(r, 100));
+                }
+                captchaInput.classList.remove('typing-cursor');
+
+                log(`AI solve generated: "${text}"`, 'success');
+                solverStatus.innerText = "SOLVE COMPLETE";
             } catch (error) {
-                console.error('Error:', error);
-                predictionText.innerText = "Error";
+                log('AI solving unit failed', 'error');
+                solverStatus.innerText = "ERROR";
+                solverStatus.classList.add('text-red-500');
             } finally {
-                dropZone.classList.remove('analyzing');
+                btnAutoSolve.disabled = false;
+                mainStatus.innerText = 'READY';
             }
-        }
+        };
+
+        btnVerify.onclick = async () => {
+            const userInput = captchaInput.value;
+            if (!userInput || !currentChallengeId) return;
+
+            log('Initiating server-side validation check...');
+            mainStatus.innerText = 'VERIFYING';
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        challenge_id: currentChallengeId,
+                        user_input: userInput
+                    })
+                });
+                const data = await response.json();
+
+                if (data.is_correct) {
+                    log(`VERIFICATION SUCCESS: Input matches ground truth ("${data.true_label}")`, 'success');
+                    solverStatus.innerText = "PASSED";
+                    solverStatus.classList.replace('text-accent-green', 'text-green-400');
+
+                    // Visual feedback
+                    captchaInput.classList.add('border-accent-green');
+                    mainStatus.innerText = 'SUCCESS';
+
+                    setTimeout(() => {
+                        captchaInput.classList.remove('border-accent-green');
+                        loadChallenge();
+                    }, 2000);
+                } else {
+                    log(`VERIFICATION FAILURE: Input mismatch. Ground truth was "${data.true_label}"`, 'error');
+                    solverStatus.innerText = "FAILED";
+                    solverStatus.classList.add('text-red-500');
+                    captchaInput.classList.add('border-red-500');
+                    mainStatus.innerText = 'FAILED';
+                    setTimeout(() => {
+                        captchaInput.classList.remove('border-red-500');
+                        mainStatus.innerText = 'READY';
+                    }, 1000);
+                }
+            } catch (err) {
+                log(`Verification process failed: ${err.message}`, 'error');
+            }
+        };
+
+        // Tab Switching Logic
+        tabV1.onclick = () => {
+            tabV1.classList.add('bg-primary', 'text-white');
+            tabV1.classList.remove('text-[#9da6b9]');
+            tabV2.classList.remove('bg-primary', 'text-white');
+            tabV2.classList.add('text-[#9da6b9]');
+            log('Switched to v1: Text Captcha mode');
+        };
+
+        tabV2.onclick = () => {
+            log('v2: Image Select mode is currently in development.', 'info');
+            // Logic for switching tabs could be added here if v2 was implemented
+        };
+
+        // Initial Load
+        window.onload = loadChallenge;
     </script>
 </body>
 

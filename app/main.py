@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 import os
 import shutil
 import asyncio
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 from .model_logic import predict_captcha, train_model_async
@@ -37,11 +38,40 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 # Global state to keep track of training
 STATE = {
     "training_in_progress": False,
-    "last_accuracy": "0.00%",
+    "last_accuracy": "0.00%", 
+    "last_char_accuracy": "0.00%",
     "progress": 0,
     "status": "Ready",
-    "dataset_path": ""
+    "dataset_path": "",
+    "model_metadata": {
+        "accuracy": "N/A",
+        "char_accuracy": "N/A",
+        "type": "N/A",
+        "loss": "N/A",
+        "features": "N/A",
+        "preprocessing": "N/A"
+    }
 }
+
+def load_metadata():
+    global STATE
+    meta_path = Path(__file__).parent.parent / "models" / "model_metadata.json"
+    if meta_path.exists():
+        try:
+            with open(meta_path, "r") as f:
+                data = json.load(f)
+                STATE["model_metadata"] = data
+                STATE["last_accuracy"] = data.get("accuracy", "0.00%")
+                STATE["last_char_accuracy"] = data.get("char_accuracy", "0.00%")
+                STATE["status"] = "Pre-trained model loaded"
+                print(f"✅ Metadata loaded from {meta_path}")
+        except Exception as e:
+            print(f"❌ Failed to load metadata: {e}")
+    else:
+        print(f"⚠️ No metadata found at {meta_path}")
+
+# Initial load
+load_metadata()
 
 # --- Background Task ---
 async def train_task(websockets):
@@ -79,7 +109,7 @@ async def train_task(websockets):
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "accuracy": STATE["last_accuracy"],
+        "metrics": STATE["model_metadata"],
         "status": STATE["status"]
     })
 

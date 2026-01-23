@@ -1,0 +1,4 @@
+architecture,val_accuracy
+Deeper (3 Conv),90.18691588785046
+Wider (More Filters),86.44859813084112
+Larger Kernels (5x5),84.57943925233644

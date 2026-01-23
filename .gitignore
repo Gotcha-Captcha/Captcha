@@ -28,8 +28,6 @@ python-*.log
 # Jupyter Notebook
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
-notebooks/*.ipynb
-!notebooks/captcha.ipynb
 
 # MLflow
 mlruns/
@@ -37,7 +35,7 @@ mlflow.db
 mlflow.db-journal
 
 # Models and Pickles
-models/*.pkl
+models/
 *.h5
 *.joblib
 

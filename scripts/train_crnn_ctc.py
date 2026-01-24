@@ -13,6 +13,8 @@ from tqdm import tqdm
 import kagglehub
 import mlflow
 import mlflow.pytorch
+import matplotlib
+matplotlib.use("Agg") # Set headless backend
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torchinfo import summary
@@ -27,7 +29,7 @@ print(f"Using device: {DEVICE}")
 IMG_WIDTH = 200
 IMG_HEIGHT = 50
 BATCH_SIZE = 32
-EPOCHS = 200
+EPOCHS = 300
 LEARNING_RATE = 0.0003  # Lowered for better CTC stability
 
 # Vocabulary will be built dynamically from labels
@@ -79,93 +81,78 @@ def collate_fn(batch):
     
     return images, targets_concat, target_lengths
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from app.ml_models.crnn import CRNN
+
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, patience=15, min_delta=0, path='models/crnn_v5_best.pth'):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.path = path
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+
+    def __call__(self, val_loss, model):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+            self.save_checkpoint(model)
+        elif val_loss > self.best_loss - self.min_delta:
+            self.counter += 1
+            print(f"  EarlyStopping counter: {self.counter} out of {self.patience}")
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_loss = val_loss
+            self.save_checkpoint(model)
+            self.counter = 0
+
+    def save_checkpoint(self, model):
+        """Saves model when validation loss decreases."""
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        torch.save(model.state_dict(), self.path)
+        print(f"  Validation loss decreased. Saving best model to {self.path}")
+
 # ============================
-# 3. Model Architecture (CRNN)
+# 4. Training Utilities
 # ============================
-class CRNN(nn.Module):
-    def __init__(self, num_classes):
-        super(CRNN, self).__init__()
+def save_prediction_samples(model, dataloader, int_to_char, epoch, run_id):
+    model.eval()
+    os.makedirs("docs/visualizations/samples", exist_ok=True)
+    
+    with torch.no_grad():
+        images, targets_concat, target_lengths = next(iter(dataloader))
+        images = images.to(DEVICE)
+        log_probs = model(images)
         
-        # Feature Extraction (CNN)
-        self.cnn = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d(2, 2),
+        decoded_texts = decode_ctc(log_probs.cpu(), int_to_char)
+        
+        # Get original texts
+        pos = 0
+        original_texts = []
+        for length in target_lengths:
+            t = targets_concat[pos:pos+length]
+            original_texts.append("".join([int_to_char[c.item()] for c in t]))
+            pos += length
             
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d(2, 2),
+        plt.figure(figsize=(12, 8))
+        for i in range(min(8, images.size(0))):
+            plt.subplot(4, 2, i + 1)
+            img = images[i].cpu().squeeze().numpy()
+            img = (img * 0.5) + 0.5
+            plt.imshow(img, cmap='gray')
+            plt.title(f"Target: {original_texts[i]} | Pred: {decoded_texts[i]}")
+            plt.axis('off')
             
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(True),
-            
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 2)),
-            
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(True),
-            
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d((2, 1), (2, 1)),
-            
-            nn.Conv2d(512, 512, kernel_size=2, padding=0),
-            nn.ReLU(True)
-        )
-        
-        # Recurrent Layers (Bidirectional LSTM)
-        self.rnn = nn.Sequential(
-            BidirectionalLSTM(1024, 256, 256),
-            BidirectionalLSTM(256, 256, num_classes)
-        )
-        
-        self._initialize_weights()
-
-    def _initialize_weights(self):
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.constant_(m.bias, 0)
-        
-    def forward(self, x):
-        # x: [batch, 1, 50, 200]
-        conv = self.cnn(x)
-        b, c, h, w = conv.size()
-        
-        # Conv feature map: [batch, 512, 2, 24]
-        # Collapse height: 512 * 2 = 1024
-        # Reshape to [width, batch, combined_features] for RNN
-        conv = conv.view(b, c * h, w) 
-        conv = conv.permute(2, 0, 1) # [24, batch, 1024]
-        
-        output = self.rnn(conv)
-        
-        # Output: [seq_len, batch, num_classes] (Logits for LogSoftmax)
-        return nn.functional.log_softmax(output, dim=2)
-
-class BidirectionalLSTM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
-        super(BidirectionalLSTM, self).__init__()
-        self.rnn = nn.LSTM(input_dim, hidden_dim, bidirectional=True)
-        self.embedding = nn.Linear(hidden_dim * 2, output_dim)
-
-    def forward(self, x):
-        recurrent, _ = self.rnn(x)
-        T, b, h = recurrent.size()
-        t_rec = recurrent.view(T * b, h)
-        output = self.embedding(t_rec) # [T * b, output_dim]
-        output = output.view(T, b, -1)
-        return output
+        plt.tight_layout()
+        sample_path = f"docs/visualizations/samples/epoch_{epoch+1}.png"
+        plt.savefig(sample_path)
+        plt.close()
+        return sample_path
 
 # ============================
 # 4. Training Utilities
@@ -187,6 +174,8 @@ def decode_ctc(output, int_to_char):
         decoded_texts.append(text)
     return decoded_texts
 
+from sklearn.metrics import precision_recall_fscore_support
+
 def validate(model, dataloader, criterion):
     model.eval()
     losses = []
@@ -194,6 +183,10 @@ def validate(model, dataloader, criterion):
     total_words = 0
     total_chars = 0
     correct_chars = 0
+    
+    # For advanced metrics
+    all_targets = []
+    all_preds = []
     
     samples_to_show = 3
     samples_logged = 0
@@ -210,6 +203,8 @@ def validate(model, dataloader, criterion):
             original_texts = []
             for length in target_lengths:
                 t = targets_concat[pos:pos+length]
+                label_indices = [c.item() for c in t]
+                all_targets.extend(label_indices)
                 original_texts.append("".join([INT_TO_CHAR[c.item()] for c in t]))
                 pos += length
 
@@ -218,26 +213,42 @@ def validate(model, dataloader, criterion):
             
             decoded_texts = decode_ctc(log_probs.cpu(), INT_TO_CHAR)
             
+            # For metrics, we need to match predicted sequence to target sequence
+            # This is tricky with CTC, but for accuracy we compare strings
             for pred, target in zip(decoded_texts, original_texts):
-                # Word Accuracy (Exact Match)
                 if pred == target:
                     correct_words += 1
                 total_words += 1
                 
-                # Simple Character Accuracy (for early feedback)
-                # Count matching characters at same position (naive)
+                # Match characters for p/r/f1 (naive alignment)
+                pred_indices = [CHAR_TO_INT.get(c, 0) for c in pred]
+                target_indices = [CHAR_TO_INT.get(c, 0) for c in target]
+                
+                # Simple padding/truncation for alignment
+                if len(pred_indices) < len(target_indices):
+                    pred_indices += [0] * (len(target_indices) - len(pred_indices))
+                elif len(pred_indices) > len(target_indices):
+                    pred_indices = pred_indices[:len(target_indices)]
+                
+                all_preds.extend(pred_indices)
+                
+                # Simple Character Accuracy
                 min_len = min(len(pred), len(target))
                 for i in range(min_len):
                     if pred[i] == target[i]:
                         correct_chars += 1
                 total_chars += len(target)
                 
-                # Log a few samples
                 if samples_logged < samples_to_show:
                     print(f"    Sample: Target={target} | Pred={pred if pred else '<empty>'}")
                     samples_logged += 1
                 
-    return np.mean(losses), correct_words / total_words, correct_chars / total_chars
+    # Calculate advanced metrics
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        all_targets, all_preds, average='macro', zero_division=0
+    )
+                
+    return np.mean(losses), correct_words / total_words, correct_chars / total_chars, precision, recall, f1
 
 # ============================
 # 5. Main Training Loop
@@ -274,6 +285,7 @@ def main():
     
     # Model, Criterion, Optimizer
     model = CRNN(NUM_CLASSES).to(DEVICE)
+    early_stopping = EarlyStopping(patience=15)
     criterion = nn.CTCLoss(blank=0, zero_infinity=True).to(DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     
@@ -312,7 +324,7 @@ def main():
                 epoch_loss += loss.item()
             
             avg_train_loss = epoch_loss / len(train_loader)
-            avg_val_loss, val_word_acc, val_char_acc = validate(model, val_loader, criterion)
+            avg_val_loss, val_word_acc, val_char_acc, val_precision, val_recall, val_f1 = validate(model, val_loader, criterion)
             
             train_losses.append(avg_train_loss)
             val_losses.append(avg_val_loss)
@@ -323,11 +335,31 @@ def main():
             mlflow.log_metric("val_loss", avg_val_loss, step=epoch)
             mlflow.log_metric("val_word_accuracy", val_word_acc, step=epoch)
             mlflow.log_metric("val_char_accuracy", val_char_acc, step=epoch)
+            mlflow.log_metric("val_precision", val_precision, step=epoch)
+            mlflow.log_metric("val_recall", val_recall, step=epoch)
+            mlflow.log_metric("val_f1_score", val_f1, step=epoch)
             
             print(f"  Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
             print(f"  Word Acc: {val_word_acc:.2%} | Char Acc: {val_char_acc:.2%}")
+            print(f"  P: {val_precision:.2f} | R: {val_recall:.2f} | F1: {val_f1:.2f}")
 
-            # Save checkoint every 10 epochs
+            # Early Stopping check (Start after Epoch 200)
+            if (epoch + 1) >= 200:
+                early_stopping(avg_val_loss, model)
+                if early_stopping.early_stop:
+                    print(f"  Early stopping triggered at Epoch {epoch+1}. Training stopped.")
+                    break
+            else:
+                # Still track best loss to save models/crnn_v5_best.pth even before E200
+                early_stopping(avg_val_loss, model)
+                early_stopping.early_stop = False # Override to prevent premature stopping
+
+            # Log prediction samples
+            if (epoch + 1) % 5 == 0:
+                sample_path = save_prediction_samples(model, val_loader, INT_TO_CHAR, epoch, mlflow.active_run().info.run_id)
+                mlflow.log_artifact(sample_path, "prediction_samples")
+
+            # Save checkpoint every 10 epochs
             if (epoch + 1) % 10 == 0:
                 save_model(model, f"models/crnn_v5_epoch_{epoch+1}.pth")
 

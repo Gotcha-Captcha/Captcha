@@ -23,9 +23,22 @@ def export_latest_metrics():
         word_acc = client.get_metric_history(run_id, "val_word_accuracy")[-1].value
         char_acc = client.get_metric_history(run_id, "val_char_accuracy")[-1].value
         
+        # New metrics with fallbacks
+        try:
+            precision = client.get_metric_history(run_id, "val_precision")[-1].value
+            recall = client.get_metric_history(run_id, "val_recall")[-1].value
+            f1_score = client.get_metric_history(run_id, "val_f1_score")[-1].value
+            loss_value = client.get_metric_history(run_id, "val_loss")[-1].value
+        except:
+            precision, recall, f1_score, loss_value = 0.0, 0.0, 0.0, 0.0
+        
         metadata = {
             "accuracy": f"{word_acc:.2%} (Word)",
             "char_accuracy": f"{char_acc:.2%}",
+            "precision": f"{precision:.2f}",
+            "recall": f"{recall:.2f}",
+            "f1_score": f"{f1_score:.2f}",
+            "loss_value": f"{loss_value:.4f}",
             "type": "CRNN (CNN + BLSTM)",
             "loss": "CTC Loss",
             "features": "Sequential Features",

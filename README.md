@@ -1,84 +1,97 @@
 # Captcha Recognition System
 
-An automated text-based CAPTCHA recognition algorithm that converts images into text. This project is useful for building automated testing environments and developing accessibility tools.
+An automated end-to-end CAPTCHA recognition system evolved from traditional machine learning to state-of-the-art Deep Learning (CRNN+CTC). This project demonstrates the journey of improving OCR accuracy from 44% to over 98%.
 
-## Project Overview
+## 🚀 Project Evolution
 
-- **Application Type**: Image Classification & Computer Vision
-- **Objective**: Recognize 5-character text-based CAPTCHAs with noise lines and attached characters.
+This project underwent three major phases of technical improvement:
 
-## Dataset
+### Phase 1: traditional ML (SVM + HOG)
+- **Method**: Character segmentation (Otsu's thresholding) + HOG Feature Extraction + LinearSVC.
+- **Limitation**: Highly sensitive to segmentation errors; struggling with overlapping characters.
+- **Accuracy**: ~44%.
 
-- **Source**: [Kaggle - Captcha Version 2 Images](https://www.kaggle.com/datasets/fournierp/captcha-version-2-images)
-- **Details**: 
-    - Approximately 1,000 images.
-    - Each image contains 5 characters.
-    - Total training samples: ~5,000 characters.
+### Phase 2: Deep Learning (CNN)
+- **Method**: Improved segmentation + 4-layer CNN for character classification.
+- **Link**: [Original CNN Research](file:///Users/parkyoungdu/Documents/GitHub/Captcha/scripts/train_cnn.py)
+- **Accuracy**: ~91% (Character level).
 
-## Model Architecture
+### Phase 3: Sequential Recognition (CRNN + CTC)
+- **Method**: **C**NN (Feature extraction) + **R**NN (BLSTM for sequence) + **C**TC Loss (Alignment).
+- **Advantage**: **No explicit segmentation required.** Recognizes the entire 5-character sequence as a whole.
+- **Accuracy**: **98.13% (Word Accuracy) / 98.88% (Char Accuracy).**
 
-### LinearSVC (Support Vector Machine)
-The project uses a `LinearSVC` model for its efficiency and strong generalization performance even with relatively small datasets.
+---
 
-### Feature Extraction: HOG (Histogram of Oriented Gradients)
-- **Method**: Measures the distribution of gradient directions within localized regions.
-- **Why HOG?**: Focuses on the "outline shape" and "structure" of characters rather than pixel values, making it robust against lighting variations and noise.
+## 🏗️ Architecture: CRNN + CTC
 
-## Project Structure
+```mermaid
+graph LR
+    A[Input Image: 50x200] --> B[CNN: Spatial Features]
+    B --> C[Bridge: Reshape]
+    C --> D[BLSTM: Seq Modeling]
+    D --> E[CTC Loss: Alignment]
+    E --> F[Output: text]
+```
+
+- **Backbone**: CNN Layers for visual feature extraction.
+- **Sequence**: Bidirectional LSTM for context modeling between characters.
+- **Loss**: CTCLoss to handle unaligned sequences (crucial for CAPTCHAs with varying character widths).
+
+## 📊 Experimental Results (Latest Run)
+
+| Metric | Value | Description |
+| :--- | :--- | :--- |
+| **Word Accuracy** | **98.13%** | Entire 5-char sequence match (Exact) |
+| **Char Accuracy** | **99.63%** | Individual character prediction success |
+| **Precision** | **0.99** | Ratio of true positive predictions |
+| **F1-Score** | **0.99** | Balanced harmonic mean of P & R |
+| **CTC Loss** | **0.0578** | Model convergence error rate |
+
+## 🛠️ Tech Stack
+
+- **Deep Learning**: PyTorch, TorchInfo
+- **Backend**: FastAPI (Python 3.13)
+- **Tracking**: MLflow (Experiment Logging & Metric Archiving)
+- **Frontend**: Glassmorphism UI (Tailwind CSS, Vanilla JS)
+- **Verification**: 5-Fold Cross Validation for robust evaluation
+
+## 📂 Project Structure
 
 ```text
 Captcha/
 ├── app/                # FastAPI Web Server
-│   ├── main.py         # Entry point & Endpoints
-│   ├── model_logic.py  # Core ML & Preprocessing
-│   ├── templates/      # Dashboard (UI)
-│   └── uploads/        # Temp Storage for Analysis
-├── models/             # Trained Weights (.pkl)
-├── notebooks/          # Research & Experimentation
-├── .gitignore
-├── README.md
-└── requirements.txt
+│   ├── services/       # OCR & Metadata Logic
+│   ├── routers/        # API Endpoints
+│   └── templates/      # Dashboard (UI)
+├── models/             # Best Weights (.pth) & Metadata (.json)
+├── scripts/            # Training, Tuning, & Integration Scripts
+├── notebooks/          # Research (Jupyter Notebooks)
+└── requirements.txt    # Dependency mapping
 ```
 
-## Tech Stack
+## 🚦 Getting Started
 
-- **Backend**: FastAPI, Uvicorn, WebSockets
-- **Frontend**: Vanilla CSS (Glassmorphism), JavaScript
-- **ML**: Scikit-learn (LinearSVC + HOG)
-- **Experiment Tracking**: MLflow
-
-## Getting Started
-
-### 1. Prerequisites
-Ensure you have Python installed. It is recommended to use a virtual environment.
-
+### 1. Setup Environment
 ```bash
-# Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate
-```
-
-### 2. Install Dependencies
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. Usage
-
-#### Demo Web Server
-To launch the interactive dashboard:
+### 2. Run Dashboard
 ```bash
-# Run from the project root
-uvicorn app.main:app --reload
-```
-Visit http://127.0.0.1:8000 to use the premium Analysis Dashboard.
-
-#### Research Notebook
-To run experiments:
-```bash
-cd notebooks
-jupyter notebook captcha.ipynb
+./.venv/bin/python -m uvicorn app.main:app --reload
 ```
 
-## Results & Models
-The models are stored in the `/models` directory using `joblib` (.pkl).
+### 3. Run Experiments
+```bash
+# General training
+python scripts/train_crnn_ctc.py
+
+# Robust verification
+python scripts/train_crnn_kfold.py
+```
+
+---
+*Developed as part of an Advanced AI OCR Portfolio. Latest metrics exported via [export_metadata.py](file:///Users/parkyoungdu/Documents/GitHub/Captcha/scripts/export_metadata.py).*

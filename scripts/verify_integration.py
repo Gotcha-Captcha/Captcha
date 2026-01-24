@@ -6,7 +6,7 @@ import os
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from app.model_logic import predict_captcha
+from app.services.captcha_service import predict_captcha
 
 def test_integration():
     # Test images from the Kaggle dataset cache

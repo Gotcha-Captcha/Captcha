@@ -8,15 +8,25 @@ from ..core.config import BASE_DIR
 from .svm_service import predict_captcha_svm
 
 def predict_captcha_cnn(image_path: str):
-    # CRNN uses a fixed vocab
-    vocab = "2345678bcdefgmnpwxy"
+    # CRNN uses a fixed vocab based on common captcha characters
+    vocab = "2345678bcdefgmnpwxy" # Default for this dataset
     int_to_char = {i + 1: char for i, char in enumerate(vocab)}
     num_classes = len(vocab) + 1
     
-    model_path = BASE_DIR.parent / "models" / "crnn_v5_final.pth"
+    model_path = BASE_DIR.parent / "models" / "crnn_v5_best.pth"
     if not model_path.exists():
-        return "Error: CRNN model file not found."
+        # Fallback to final or epoch checkpoints
+        model_path = BASE_DIR.parent / "models" / "crnn_v5_final.pth"
+        
+    if not model_path.exists():
+        checkpoint_dir = BASE_DIR.parent / "models"
+        checkpoints = sorted(list(checkpoint_dir.glob("crnn_v5_epoch_*.pth")))
+        if checkpoints:
+            model_path = checkpoints[-1]
+        else:
+            return "Error: CRNN model file not found."
     
+    print(f"Loading model from {model_path}")
     model = CRNN(num_classes)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()

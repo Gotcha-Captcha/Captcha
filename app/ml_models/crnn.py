@@ -18,37 +18,50 @@ class BidirectionalLSTM(nn.Module):
 class CRNN(nn.Module):
     def __init__(self, num_classes):
         super(CRNN, self).__init__()
+        # Simplified CNN mirroring the high-performing notebook logic
+        # Input: (1, 50, 200)
         self.cnn = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=3, padding=1),
+            nn.Conv2d(1, 32, kernel_size=3, padding=1),
             nn.ReLU(True),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.MaxPool2d(2, 2), # (32, 25, 100)
+            
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(True),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 2)),
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.BatchNorm2d(512),
-            nn.ReLU(True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(True),
-            nn.MaxPool2d((2, 1), (2, 1)),
-            nn.Conv2d(512, 512, kernel_size=2, padding=0),
-            nn.ReLU(True)
+            nn.MaxPool2d(2, 2), # (64, 12, 50)
         )
+        
+        # Mapping layer (Bottleneck/Refinement)
+        # Height is 12, channels 64 -> 12 * 64 = 768
+        self.map_to_rnn = nn.Sequential(
+            nn.Linear(768, 64),
+            nn.ReLU(True),
+            nn.Dropout(0.2)
+        )
+        
+        # RNN Layers
+        # Input dim is 64 from map_to_rnn
+        # Using LSTM layers with dropout as per notebook
         self.rnn = nn.Sequential(
-            BidirectionalLSTM(1024, 256, 256),
-            BidirectionalLSTM(256, 256, num_classes)
+            BidirectionalLSTM(64, 128, 256),
+            nn.Dropout(0.25),
+            BidirectionalLSTM(256, 64, num_classes)
         )
         
     def forward(self, x):
+        # x: [batch, 1, 50, 200]
         conv = self.cnn(x)
-        b, c, h, w = conv.size()
-        conv = conv.view(b, c * h, w) 
-        conv = conv.permute(2, 0, 1)
-        output = self.rnn(conv)
+        b, c, h, w = conv.size() 
+        
+        # Reshape for Linear layer: [batch, width, channels * height]
+        # w is 50 (sequence length)
+        conv = conv.view(b, c * h, w)
+        conv = conv.permute(0, 2, 1) # [batch, 50, 768]
+        
+        # Map to RNN expected dimension
+        rnn_input = self.map_to_rnn(conv) # [batch, 50, 64]
+        
+        # Permute for PyTorch RNN: [seq_len, batch, input_size]
+        rnn_input = rnn_input.permute(1, 0, 2) # [50, batch, 64]
+        
+        output = self.rnn(rnn_input)
         return torch.nn.functional.log_softmax(output, dim=2)

@@ -23,3 +23,5 @@ python-multipart
 jinja2
 websockets
 seaborn
+torch
+torchinfo

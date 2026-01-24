@@ -56,7 +56,4 @@ clean_nb.py
 ehthumbs.db
 Thumbs.db
 
-# Debug
-debug_output/
-
-uploads/
+docs/visualizations/samples/

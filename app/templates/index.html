@@ -145,6 +145,23 @@
                             <p class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters
                                 correctly recognized across all samples.</p>
                         </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div
+                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                                <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Precision</p>
+                                <span class="text-white text-sm font-bold">{{ metrics.precision }}</span>
+                            </div>
+                            <div
+                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                                <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Recall</p>
+                                <span class="text-white text-sm font-bold">{{ metrics.recall }}</span>
+                            </div>
+                            <div
+                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                                <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">F1-Score</p>
+                                <span class="text-white text-sm font-bold">{{ metrics.f1_score }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -162,6 +179,10 @@
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Loss Function</span>
                             <span class="text-white font-medium">{{ metrics.loss }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-[#9da6b9]">Loss Value</span>
+                            <span class="text-accent-green font-mono font-bold">{{ metrics.loss_value }}</span>
                         </div>
                     </div>
                 </div>

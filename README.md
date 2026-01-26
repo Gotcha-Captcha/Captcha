@@ -87,7 +87,7 @@ pip install -r requirements.txt
 
 ### 2. Run Dashboard
 ```bash
-./.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+./.venv/bin/python -m uvicorn app.main:app --reload --port 80
 ```
 
 ### 3. Deploy to AWS (EC2)
@@ -96,7 +96,7 @@ The project is configured for automated deployment to **AWS EC2** via GitHub Act
     - `EC2_HOST` (IP or DNS), `EC2_USERNAME` (e.g. `ubuntu`), `EC2_SSH_KEY` (Private Key)
     - `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 2. Push or merge to the **`main`** branch to trigger the CD pipeline.
-3. The workflow will build/push an image to Docker Hub and then SSH into your EC2 to restart the container.
+3. The workflow will build/push an image to Docker Hub and then SSH into your EC2 to restart the container on port **80**.
 
 ### 3. Run Experiments
 ```bash

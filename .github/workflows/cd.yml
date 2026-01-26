@@ -55,10 +55,10 @@ jobs:
             docker rm ${{ env.CONTAINER_NAME }} || true
             
             # Run the new container
-            # Using port 8000 as per previous optimization
+            # Using port 80 for production access
             docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
-              -p 8000:8000 \
+              -p 80:80 \
               --restart always \
               ${{ env.DOCKERHUB_REPO }}:latest
             

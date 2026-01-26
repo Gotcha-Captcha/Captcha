@@ -1,0 +1,66 @@
+name: CD (AWS EC2 via Docker Hub)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOCKERHUB_REPO: 9september/captcha
+  CONTAINER_NAME: captcha-service
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push to Docker Hub
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          docker build -t ${{ env.DOCKERHUB_REPO }}:$IMAGE_TAG -t ${{ env.DOCKERHUB_REPO }}:latest .
+          docker push ${{ env.DOCKERHUB_REPO }}:$IMAGE_TAG
+          docker push ${{ env.DOCKERHUB_REPO }}:latest
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to Docker Hub on EC2
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Pull the latest image
+            docker pull ${{ env.DOCKERHUB_REPO }}:latest
+            
+            # Stop and remove existing container if it exists
+            docker stop ${{ env.CONTAINER_NAME }} || true
+            docker rm ${{ env.CONTAINER_NAME }} || true
+            
+            # Run the new container
+            # Using port 8000 as per previous optimization
+            docker run -d \
+              --name ${{ env.CONTAINER_NAME }} \
+              -p 8000:8000 \
+              --restart always \
+              ${{ env.DOCKERHUB_REPO }}:latest
+            
+            # Cleanup old images
+            docker image prune -f

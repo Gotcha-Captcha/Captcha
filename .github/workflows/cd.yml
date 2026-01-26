@@ -44,23 +44,29 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Login to Docker Hub on EC2
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            set -e # Exit immediately if a command exits with a non-zero status
             
-            # Pull the latest image
-            docker pull ${{ env.DOCKERHUB_REPO }}:latest
+            # Login to Docker Hub on EC2 with sudo
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Pull the latest image with sudo
+            sudo docker pull ${{ env.DOCKERHUB_REPO }}:latest
             
             # Stop and remove existing container if it exists
-            docker stop ${{ env.CONTAINER_NAME }} || true
-            docker rm ${{ env.CONTAINER_NAME }} || true
+            # We use sudo and don't let it fail the script if container doesn't exist
+            sudo docker stop ${{ env.CONTAINER_NAME }} || true
+            sudo docker rm ${{ env.CONTAINER_NAME }} || true
             
-            # Run the new container
+            # Run the new container with sudo
             # Using port 80 for production access
-            docker run -d \
+            sudo docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               -p 80:80 \
               --restart always \
               ${{ env.DOCKERHUB_REPO }}:latest
             
+            # Verify status
+            sudo docker ps -a
+            
             # Cleanup old images
-            docker image prune -f
+            sudo docker image prune -f

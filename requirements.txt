@@ -1,0 +1,27 @@
+# Core ML & Data Science
+kagglehub
+numpy
+matplotlib
+joblib
+scikit-learn
+scikit-image
+
+# Tracking & Deployment
+mlflow
+pyngrok
+
+# Jupyter & VS Code Integration
+ipykernel
+jupyter
+notebook
+tqdm
+
+# FastAPI Web Server
+fastapi
+uvicorn
+python-multipart
+jinja2
+websockets
+seaborn
+torch
+torchinfo

@@ -11,15 +11,21 @@ This project underwent three major phases of technical improvement:
 - **Limitation**: Highly sensitive to segmentation errors; struggling with overlapping characters.
 - **Accuracy**: ~44%.
 
+![Phase 1 Training History](docs/visualizations/training_history_v1.png)
+
 ### Phase 2: Deep Learning (CNN)
 - **Method**: Improved segmentation + 4-layer CNN for character classification.
 - **Link**: [Original CNN Research](file:///Users/parkyoungdu/Documents/GitHub/Captcha/scripts/train_cnn.py)
 - **Accuracy**: ~91% (Character level).
 
+![Phase 2 Training History](docs/visualizations/training_history_v2.png)
+
 ### Phase 3: Sequential Recognition (CRNN + CTC)
 - **Method**: **C**NN (Feature extraction) + **R**NN (BLSTM for sequence) + **C**TC Loss (Alignment).
 - **Advantage**: **No explicit segmentation required.** Recognizes the entire 5-character sequence as a whole.
 - **Accuracy**: **98.13% (Word Accuracy) / 98.88% (Char Accuracy).**
+
+![Phase 3 Training History](docs/visualizations/training_history_v3.png)
 
 ---
 

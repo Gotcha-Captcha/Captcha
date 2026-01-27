@@ -4,7 +4,7 @@ from skimage.io import imread
 from skimage.color import rgb2gray
 from skimage.transform import resize
 from ..ml_models.crnn import CRNN
-from ..core.config import BASE_DIR
+from ..core.config import BASE_DIR, MODELS_DIR
 from .svm_service import predict_captcha_svm
 
 def predict_captcha_cnn(image_path: str):
@@ -13,14 +13,13 @@ def predict_captcha_cnn(image_path: str):
     int_to_char = {i + 1: char for i, char in enumerate(vocab)}
     num_classes = len(vocab) + 1
     
-    model_path = BASE_DIR.parent / "models" / "crnn_v5_best.pth"
+    model_path = MODELS_DIR / "crnn_v5_best.pth"
     if not model_path.exists():
         # Fallback to final or epoch checkpoints
-        model_path = BASE_DIR.parent / "models" / "crnn_v5_final.pth"
+        model_path = MODELS_DIR / "crnn_v5_final.pth"
         
     if not model_path.exists():
-        checkpoint_dir = BASE_DIR.parent / "models"
-        checkpoints = sorted(list(checkpoint_dir.glob("crnn_v5_epoch_*.pth")))
+        checkpoints = sorted(list(MODELS_DIR.glob("crnn_v5_epoch_*.pth")))
         if checkpoints:
             model_path = checkpoints[-1]
         else:

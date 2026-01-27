@@ -2,10 +2,10 @@ from pathlib import Path
 import os
 import glob
 
-BASE_DIR = Path(__file__).parent.parent
-UPLOAD_DIR = BASE_DIR / "uploads"
-TEMPLATES_DIR = BASE_DIR / "templates"
-MODELS_DIR = BASE_DIR.parent / "models"
+BASE_DIR = Path(__file__).parent.parent.parent
+UPLOAD_DIR = BASE_DIR / "app" / "uploads"
+TEMPLATES_DIR = BASE_DIR / "app" / "templates"
+MODELS_DIR = BASE_DIR / "models"
 
 # Global state to keep track of training
 STATE = {
@@ -18,6 +18,10 @@ STATE = {
     "model_metadata": {
         "accuracy": "N/A",
         "char_accuracy": "N/A",
+        "precision": "N/A",
+        "recall": "N/A",
+        "f1_score": "N/A",
+        "loss_value": "N/A",
         "type": "N/A",
         "loss": "N/A",
         "features": "N/A",
@@ -45,16 +49,17 @@ def get_dataset_path():
 
 def get_v2_dataset_path():
     # Priority 1: Docker Volume Mount Path
-    docker_v2 = Path("/app/data/samples_v2/images")
-    # Priority 2: User's Downloads folder (images subfolder)
-    downloads_v2_img = Path("/Users/parkyoungdu/Downloads/samples_v2/images")
-    # Priority 3: User's project root fallback
-    local_v2_img = Path(__file__).parent.parent.parent / "samples_v2" / "images"
+    paths_to_check = [
+        Path("/app/data/samples_v2/images"),
+        Path("/Users/parkyoungdu/Downloads/samples_v2/images"),
+        Path(__file__).parent.parent.parent / "samples_v2" / "images"
+    ]
     
-    if docker_v2.exists():
-        return str(docker_v2)
-    if downloads_v2_img.exists():
-        return str(downloads_v2_img)
-    if local_v2_img.exists():
-        return str(local_v2_img)
+    for p in paths_to_check:
+        if p.exists():
+            # Check if there's a nested "Google_Recaptcha_V2_Images_Dataset" folder
+            nested = p / "Google_Recaptcha_V2_Images_Dataset"
+            if nested.exists():
+                return str(nested)
+            return str(p)
     return ""

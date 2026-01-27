@@ -45,7 +45,8 @@ app.include_router(captcha_v2.router)
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "metrics": STATE["model_metadata"],
+        "v1_metrics": STATE["v1_metadata"],
+        "v2_metrics": STATE["v2_metadata"],
         "status": STATE["status"]
     })
 

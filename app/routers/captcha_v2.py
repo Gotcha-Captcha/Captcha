@@ -31,9 +31,11 @@ async def get_challenge():
     
     # In 'samples_v2/images', subfolders are labels
     subdirs = [d for d in dataset_root.iterdir() if d.is_dir() and not d.name.startswith('.')]
+    print(f"DEBUG: Found subdirs in {dataset_root}: {[d.name for d in subdirs]}")
     
-    # Filter out "Other" from potential target categories to avoid ambiguous prompts
-    target_subdirs = [d for d in subdirs if d.name.lower() != "other"]
+    # Filter out "Other", "labels", "images" from potential target categories to avoid ambiguous prompts or structural folders
+    excluded_names = ["other", "labels", "images"]
+    target_subdirs = [d for d in subdirs if d.name.lower() not in excluded_names]
     
     if not target_subdirs:
         # If no identifiable subfolders, use any including Other (backup)

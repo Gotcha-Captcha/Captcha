@@ -52,14 +52,36 @@ def get_v2_dataset_path():
     paths_to_check = [
         Path("/app/data/samples_v2/images"),
         Path("/Users/parkyoungdu/Downloads/samples_v2/images"),
-        Path(__file__).parent.parent.parent / "samples_v2" / "images"
+        Path(__file__).parent.parent.parent / "samples_v2" / "images",
+        # Fallback paths without /images suffix
+        Path("/app/data/samples_v2"),
+        Path("/Users/parkyoungdu/Downloads/samples_v2"),
+        Path(__file__).parent.parent.parent / "samples_v2"
     ]
     
     for p in paths_to_check:
         if p.exists():
-            # Check if there's a nested "Google_Recaptcha_V2_Images_Dataset" folder
+            # Check for "Google_Recaptcha_V2_Images_Dataset"
             nested = p / "Google_Recaptcha_V2_Images_Dataset"
             if nested.exists():
-                return str(nested)
+                # If Google_Recaptcha_V2_Images_Dataset/images exists, that's likely where the categories are
+                if (nested / "images").exists():
+                    res = str(nested / "images")
+                else:
+                    res = str(nested)
+                print(f"INFO: Detected v2 dataset at {res}")
+                return res
+            
+            # Check if this directory itself contains 'images' and 'labels'
+            # If so, the real images are probably in 'images'
+            subdirs = [d.name for d in p.iterdir() if d.is_dir() and not d.name.startswith('.')]
+            if "images" in subdirs and "labels" in subdirs:
+                # But only if p/images has subdirectories (categories)
+                if any(d.is_dir() for d in (p / "images").iterdir()):
+                    res = str(p / "images")
+                    print(f"INFO: Detected v2 dataset at {res} (nested in images/)")
+                    return res
+            
+            print(f"INFO: Using v2 dataset at {p}")
             return str(p)
     return ""

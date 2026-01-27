@@ -46,22 +46,38 @@ jobs:
           script: |
             set -e # Exit immediately if a command exits with a non-zero status
             
+            # Setup host data directory
+            DATA_DIR="$HOME/captcha_data"
+            mkdir -p $DATA_DIR
+            
+            # Prune unused images and layers to free up space
+            sudo docker system prune -f
+            
             # Login to Docker Hub on EC2 with sudo
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             
             # Pull the latest image with sudo
             sudo docker pull ${{ env.DOCKERHUB_REPO }}:latest
             
+            # One-time Dataset Initialization: Download only if main data folder doesn't exist
+            if [ ! -d "$DATA_DIR/v1_samples" ]; then
+              echo "🚀 Initializing datasets on host (one-time process)..."
+              sudo docker run --rm \
+                -v $DATA_DIR:/app/data \
+                ${{ env.DOCKERHUB_REPO }}:latest \
+                python download_datasets.py
+            fi
+            
             # Stop and remove existing container if it exists
-            # We use sudo and don't let it fail the script if container doesn't exist
             sudo docker stop ${{ env.CONTAINER_NAME }} || true
             sudo docker rm ${{ env.CONTAINER_NAME }} || true
             
-            # Run the new container with sudo
-            # Using port 80 for production access
+            # Run the new container with volume mounting
+            # We mount the host's DATA_DIR to /app/data inside the container
             sudo docker run -d \
               --name ${{ env.CONTAINER_NAME }} \
               -p 80:80 \
+              -v $DATA_DIR:/app/data \
               --restart always \
               ${{ env.DOCKERHUB_REPO }}:latest
             

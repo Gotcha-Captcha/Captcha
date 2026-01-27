@@ -221,10 +221,8 @@
                                 class="px-4 py-2 rounded-md bg-primary text-white text-xs font-bold transition-all">v1:
                                 Text Captcha</button>
                             <button id="tab-v2"
-                                class="px-4 py-2 rounded-md text-[#9da6b9] text-xs font-bold hover:text-white transition-all relative">
+                                class="px-4 py-2 rounded-md text-[#9da6b9] text-xs font-bold hover:text-white transition-all">
                                 v2: Image Select
-                                <span
-                                    class="absolute -top-2 -right-2 px-1.5 py-0.5 bg-accent-green text-black text-[8px] font-black rounded uppercase">Soon</span>
                             </button>
                         </div>
 
@@ -243,7 +241,8 @@
                             </button>
                         </div>
 
-                        <div id="challenge-container"
+                        <!-- v1: Text Captcha Container -->
+                        <div id="v1-container"
                             class="relative bg-surface-dark rounded-xl border border-border-dark shadow-inner overflow-hidden min-h-[140px] flex items-center justify-center p-4 group">
                             <div
                                 class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent">
@@ -251,12 +250,26 @@
                             <img id="challenge-img" src=""
                                 class="h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(19,91,236,0.3)] z-10"
                                 alt="Challenge" />
-                            <div id="scanner" class="scanner-line z-20"></div>
+                            <div id="v1-scanner" class="scanner-line z-20"></div>
+                        </div>
+
+                        <!-- v2: Image Select Container -->
+                        <div id="v2-container" class="hidden flex flex-col gap-4 max-w-sm mx-auto">
+                            <div class="bg-primary p-4 rounded-lg flex flex-col gap-1 shadow-lg shadow-primary/20">
+                                <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Select all images
+                                    with</p>
+                                <h3 id="v2-target-name" class="text-2xl font-black uppercase tracking-tight">---</h3>
+                            </div>
+                            <div id="v2-grid"
+                                class="grid grid-cols-3 gap-2 bg-surface-dark p-2 rounded-xl border border-border-dark relative">
+                                <!-- Grid items will be injected here -->
+                                <div id="v2-scanner" class="scanner-line z-20"></div>
+                            </div>
                         </div>
 
                         <!-- Solver Controls -->
                         <div class="bg-surface-dark border border-border-dark rounded-xl p-6 space-y-4">
-                            <div class="space-y-2">
+                            <div id="v1-input-group" class="space-y-2">
                                 <div class="flex justify-between items-end">
                                     <label class="text-[10px] font-bold text-[#9da6b9] uppercase tracking-widest">Input
                                         Buffer</label>
@@ -337,18 +350,28 @@
         const clearTerminal = document.getElementById('clear-terminal');
         const mainStatus = document.getElementById('main-status');
 
+        const v1Container = document.getElementById('v1-container');
+        const v2Container = document.getElementById('v2-container');
         const challengeImg = document.getElementById('challenge-img');
+        const v1Scanner = document.getElementById('v1-scanner');
+        const v2Scanner = document.getElementById('v2-scanner');
+        const v2TargetName = document.getElementById('v2-target-name');
+        const v2Grid = document.getElementById('v2-grid');
+        const v1InputGroup = document.getElementById('v1-input-group');
+
         const captchaInput = document.getElementById('captcha-solve-input');
         const btnAutoSolve = document.getElementById('btn-auto-solve');
         const btnVerify = document.getElementById('btn-verify-solve');
         const refreshChallenge = document.getElementById('refresh-challenge');
         const solverStatus = document.getElementById('solver-status');
-        const scanner = document.getElementById('scanner');
 
         const tabV1 = document.getElementById('tab-v1');
         const tabV2 = document.getElementById('tab-v2');
 
-        let currentChallengeId = null;
+        let currentChallengeId = null; // for v1
+        let currentV2Challenge = null; // { target, grid: [{image, id}] }
+        let selectedV2Indices = new Set();
+        let currentMode = 'v1'; // 'v1' or 'v2'
 
         // Helper: Log to terminal
         function log(msg, type = 'info') {
@@ -364,36 +387,111 @@
 
         // --- Challenge Logic ---
         async function loadChallenge() {
-            log('Requesting new challenge from dataset...');
-            scanner.style.display = 'block';
+            if (currentMode === 'v1') {
+                await loadChallengeV1();
+            } else {
+                await loadChallengeV2();
+            }
+        }
+
+        async function loadChallengeV1() {
+            log('Requesting new v1 challenge...');
+            v1Scanner.style.display = 'block';
             mainStatus.innerText = 'FETCHING';
-            mainStatus.classList.add('text-yellow-500');
 
             try {
                 const response = await fetch('/api/challenge');
                 const data = await response.json();
-
                 challengeImg.src = data.image;
                 currentChallengeId = data.challenge_id;
                 captchaInput.value = "";
                 solverStatus.innerText = "READY";
-                solverStatus.classList.remove('text-red-500');
-
                 log(`Challenge loaded: ${currentChallengeId}`, 'success');
             } catch (err) {
-                log(`Failed to load challenge: ${err.message}`, 'error');
+                log(`Failed to load v1 challenge: ${err.message}`, 'error');
             } finally {
-                scanner.style.display = 'none';
+                v1Scanner.style.display = 'none';
                 mainStatus.innerText = 'READY';
-                mainStatus.classList.remove('text-yellow-500');
             }
+        }
+
+        async function loadChallengeV2() {
+            log('Requesting new v2 challenge...');
+            v2Scanner.style.display = 'block';
+            mainStatus.innerText = 'FETCHING';
+            selectedV2Indices.clear();
+
+            try {
+                const response = await fetch('/api/v2/challenge');
+                const data = await response.json();
+                currentV2Challenge = data;
+                v2TargetName.innerText = data.target;
+
+                // Clear and render grid
+                renderV2Grid(data.grid);
+
+                solverStatus.innerText = "READY";
+                log(`v2 Challenge loaded. Target: ${data.target}`, 'success');
+            } catch (err) {
+                log(`Failed to load v2 challenge: ${err.message}`, 'error');
+            } finally {
+                v2Scanner.style.display = 'none';
+                mainStatus.innerText = 'READY';
+            }
+        }
+
+        function renderV2Grid(grid) {
+            // Keep scanner, remove other children
+            const children = Array.from(v2Grid.children);
+            children.forEach(c => { if (c.id !== 'v2-scanner') v2Grid.removeChild(c); });
+
+            grid.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "relative aspect-square bg-background-dark border border-border-dark cursor-pointer overflow-hidden group transition-all duration-300 hover:border-primary";
+                div.innerHTML = `
+                    <img src="data:image/jpeg;base64,${item.image}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-primary/20 opacity-0 transition-opacity duration-300 select-overlay"></div>
+                    <div class="absolute top-1 right-1 bg-primary text-white rounded-full size-5 flex items-center justify-center opacity-0 transition-all duration-300 transform scale-50 select-check">
+                        <span class="material-symbols-outlined text-xs">done</span>
+                    </div>
+                `;
+                div.onclick = () => toggleV2Selection(div, index);
+                v2Grid.appendChild(div);
+            });
+        }
+
+        function toggleV2Selection(el, index) {
+            const overlay = el.querySelector('.select-overlay');
+            const check = el.querySelector('.select-check');
+
+            if (selectedV2Indices.has(index)) {
+                selectedV2Indices.delete(index);
+                overlay.style.opacity = '0';
+                check.style.opacity = '0';
+                check.style.transform = 'scale(0.5)';
+                el.classList.remove('ring-4', 'ring-primary', 'ring-inset');
+            } else {
+                selectedV2Indices.add(index);
+                overlay.style.opacity = '1';
+                check.style.opacity = '1';
+                check.style.transform = 'scale(1)';
+                el.classList.add('ring-4', 'ring-primary', 'ring-inset');
+            }
+            log(`Index ${index} ${selectedV2Indices.has(index) ? 'selected' : 'deselected'}`);
         }
 
         refreshChallenge.onclick = loadChallenge;
 
         btnAutoSolve.onclick = async () => {
-            if (!currentChallengeId) return;
+            if (currentMode === 'v1') {
+                await autoSolveV1();
+            } else {
+                await autoSolveV2();
+            }
+        };
 
+        async function autoSolveV1() {
+            if (!currentChallengeId) return;
             btnAutoSolve.disabled = true;
             log('Initializing AI solving unit...', 'info');
             solverStatus.innerText = "ANALYZING...";
@@ -406,88 +504,181 @@
                     body: JSON.stringify({ challenge_id: currentChallengeId })
                 });
                 const data = await response.json();
-
-                // Typing effect
                 captchaInput.value = "";
                 captchaInput.classList.add('typing-cursor');
-                const text = data.prediction;
-                for (let i = 0; i < text.length; i++) {
-                    captchaInput.value += text[i];
+                for (let char of data.prediction) {
+                    captchaInput.value += char;
                     await new Promise(r => setTimeout(r, 100));
                 }
                 captchaInput.classList.remove('typing-cursor');
-
-                log(`AI solve generated: "${text}"`, 'success');
+                log(`AI solve generated: "${data.prediction}"`, 'success');
                 solverStatus.innerText = "SOLVE COMPLETE";
             } catch (error) {
                 log('AI solving unit failed', 'error');
                 solverStatus.innerText = "ERROR";
-                solverStatus.classList.add('text-red-500');
             } finally {
                 btnAutoSolve.disabled = false;
                 mainStatus.innerText = 'READY';
             }
-        };
+        }
+
+        async function autoSolveV2() {
+            if (!currentV2Challenge) return;
+            btnAutoSolve.disabled = true;
+            log('Initializing Vision AI to scan grid...', 'info');
+            solverStatus.innerText = "SCANNING...";
+            mainStatus.innerText = 'SOLVING';
+
+            try {
+                const response = await fetch('/api/v2/solve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target: currentV2Challenge.target,
+                        grid_ids: currentV2Challenge.grid.map(g => g.id)
+                    })
+                });
+                const data = await response.json();
+
+                // Clear current and apply AI selection
+                selectedV2Indices.clear();
+                const gridItems = Array.from(v2Grid.children).filter(c => c.id !== 'v2-scanner');
+
+                // Visual feedback: click one by one
+                for (let idx of data.correct_indices) {
+                    toggleV2Selection(gridItems[idx], idx);
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
+                log(`AI scan complete. Selected ${data.correct_indices.length} matches.`, 'success');
+                solverStatus.innerText = "SCAN COMPLETE";
+            } catch (error) {
+                log('Vison AI failed', 'error');
+                solverStatus.innerText = "ERROR";
+            } finally {
+                btnAutoSolve.disabled = false;
+                mainStatus.innerText = 'READY';
+            }
+        }
 
         btnVerify.onclick = async () => {
+            if (currentMode === 'v1') {
+                await verifyV1();
+            } else {
+                await verifyV2();
+            }
+        };
+
+        async function verifyV1() {
             const userInput = captchaInput.value;
             if (!userInput || !currentChallengeId) return;
-
-            log('Initiating server-side validation check...');
+            log('Initiating validation check...');
             mainStatus.innerText = 'VERIFYING';
 
             try {
                 const response = await fetch('/api/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ challenge_id: currentChallengeId, user_input: userInput })
+                });
+                const data = await response.json();
+                handleVerifyResult(data.is_correct, data.true_label);
+            } catch (err) {
+                log(`Verification failed: ${err.message}`, 'error');
+            }
+        }
+
+        async function verifyV2() {
+            if (!currentV2Challenge) return;
+            log('Verifying grid selection with server...');
+            mainStatus.innerText = 'VERIFYING';
+
+            const selectedIds = Array.from(selectedV2Indices).map(idx => currentV2Challenge.grid[idx].id);
+
+            try {
+                const response = await fetch('/api/v2/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        challenge_id: currentChallengeId,
-                        user_input: userInput
+                        target: currentV2Challenge.target,
+                        grid_ids: currentV2Challenge.grid.map(g => g.id),
+                        selected_ids: selectedIds
                     })
                 });
                 const data = await response.json();
-
-                if (data.is_correct) {
-                    log(`VERIFICATION SUCCESS: Input matches ground truth ("${data.true_label}")`, 'success');
-                    solverStatus.innerText = "PASSED";
-                    solverStatus.classList.replace('text-accent-green', 'text-green-400');
-
-                    // Visual feedback
-                    captchaInput.classList.add('border-accent-green');
-                    mainStatus.innerText = 'SUCCESS';
-
-                    setTimeout(() => {
-                        captchaInput.classList.remove('border-accent-green');
-                        loadChallenge();
-                    }, 2000);
-                } else {
-                    log(`VERIFICATION FAILURE: Input mismatch. Ground truth was "${data.true_label}"`, 'error');
-                    solverStatus.innerText = "FAILED";
-                    solverStatus.classList.add('text-red-500');
-                    captchaInput.classList.add('border-red-500');
-                    mainStatus.innerText = 'FAILED';
-                    setTimeout(() => {
-                        captchaInput.classList.remove('border-red-500');
-                        mainStatus.innerText = 'READY';
-                    }, 1000);
-                }
+                handleVerifyResult(data.is_correct, `Matches: ${data.actual_ids.length}`);
             } catch (err) {
-                log(`Verification process failed: ${err.message}`, 'error');
+                log(`v2 Verification failed: ${err.message}`, 'error');
             }
-        };
+        }
+
+        function handleVerifyResult(isCorrect, infoText) {
+            const v1Box = v1Container;
+            const v2Box = v2Grid;
+            const targetBoxes = [v1Box, v2Box];
+
+            if (isCorrect) {
+                log(`SUCCESS: ${infoText}`, 'success');
+                solverStatus.innerText = "PASSED";
+                mainStatus.innerText = 'SUCCESS';
+
+                targetBoxes.forEach(box => {
+                    box.classList.add('border-accent-green', 'ring-2', 'ring-accent-green/20');
+                    box.classList.remove('border-border-dark');
+                });
+
+                setTimeout(() => {
+                    targetBoxes.forEach(box => {
+                        box.classList.remove('border-accent-green', 'ring-2', 'ring-accent-green/20');
+                        box.classList.add('border-border-dark');
+                    });
+                    loadChallenge();
+                }, 2000);
+            } else {
+                log(`FAILURE: ${infoText}`, 'error');
+                solverStatus.innerText = "FAILED";
+                mainStatus.innerText = 'FAILED';
+
+                targetBoxes.forEach(box => {
+                    box.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                    box.classList.remove('border-border-dark');
+                });
+
+                setTimeout(() => {
+                    mainStatus.innerText = 'READY';
+                    targetBoxes.forEach(box => {
+                        box.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+                        box.classList.add('border-border-dark');
+                    });
+                }, 1000);
+            }
+        }
 
         // Tab Switching Logic
         tabV1.onclick = () => {
+            currentMode = 'v1';
             tabV1.classList.add('bg-primary', 'text-white');
             tabV1.classList.remove('text-[#9da6b9]');
             tabV2.classList.remove('bg-primary', 'text-white');
             tabV2.classList.add('text-[#9da6b9]');
-            log('Switched to v1: Text Captcha mode');
+            v1Container.classList.remove('hidden');
+            v2Container.classList.add('hidden');
+            v1InputGroup.classList.remove('hidden');
+            log('Switched to v1: Text Captcha');
+            loadChallenge();
         };
 
         tabV2.onclick = () => {
-            log('v2: Image Select mode is currently in development.', 'info');
-            // Logic for switching tabs could be added here if v2 was implemented
+            currentMode = 'v2';
+            tabV2.classList.add('bg-primary', 'text-white');
+            tabV2.classList.remove('text-[#9da6b9]');
+            tabV1.classList.remove('bg-primary', 'text-white');
+            tabV1.classList.add('text-[#9da6b9]');
+            v2Container.classList.remove('hidden');
+            v1Container.classList.add('hidden');
+            v1InputGroup.classList.add('hidden');
+            log('Switched to v2: Image Select');
+            loadChallenge();
         };
 
         // Initial Load

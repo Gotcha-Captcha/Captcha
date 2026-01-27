@@ -19,7 +19,8 @@ docs/
 models/*
 !models/crnn_v5_best.pth
 !models/crnn_v5_final.pth
-!models/model_metadata.json
+!models/model_metadata_v1.json
+!models/model_metadata_v2.json
 !models/captcha_svm_model.pkl
 !models/label_encoder.pkl
 !models/scaler.pkl

@@ -129,37 +129,37 @@
                     <div class="space-y-3">
                         <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
                             <div class="flex flex-col gap-1">
-                                <p class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Word Accuracy
+                                <p id="metric-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Word Accuracy
                                 </p>
-                                <span class="text-primary text-lg font-bold">{{ metrics.accuracy }}</span>
+                                <span id="metric-accuracy" class="text-primary text-lg font-bold">{{ v1_metrics.accuracy }}</span>
                             </div>
-                            <p class="text-[10px] text-[#475569] mt-2 leading-tight">Entire 5-character sequence must be
+                            <p id="metric-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Entire 5-character sequence must be
                                 perfect. One wrong letter = 0% success.</p>
                         </div>
                         <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
                             <div class="flex flex-col gap-1">
-                                <p class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Character
+                                <p id="metric-char-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Character
                                     Accuracy</p>
-                                <span class="text-accent-green text-lg font-bold">{{ metrics.char_accuracy }}</span>
+                                <span id="metric-char-accuracy" class="text-accent-green text-lg font-bold">{{ v1_metrics.char_accuracy }}</span>
                             </div>
-                            <p class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters
+                            <p id="metric-char-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters
                                 correctly recognized across all samples.</p>
                         </div>
                         <div class="grid grid-cols-3 gap-3">
                             <div
                                 class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Precision</p>
-                                <span class="text-white text-sm font-bold">{{ metrics.precision }}</span>
+                                <span id="metric-precision" class="text-white text-sm font-bold">{{ v1_metrics.precision }}</span>
                             </div>
                             <div
                                 class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Recall</p>
-                                <span class="text-white text-sm font-bold">{{ metrics.recall }}</span>
+                                <span id="metric-recall" class="text-white text-sm font-bold">{{ v1_metrics.recall }}</span>
                             </div>
                             <div
                                 class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">F1-Score</p>
-                                <span class="text-white text-sm font-bold">{{ metrics.f1_score }}</span>
+                                <span id="metric-f1-score" class="text-white text-sm font-bold">{{ v1_metrics.f1_score }}</span>
                             </div>
                         </div>
                     </div>
@@ -170,19 +170,19 @@
                     <div class="space-y-2">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Status</span>
-                            <span class="text-accent-green font-medium">Pre-trained</span>
+                            <span id="metric-status" class="text-accent-green font-medium">Pre-trained</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Architecture</span>
-                            <span class="text-white font-medium">{{ metrics.type }}</span>
+                            <span id="metric-type" class="text-white font-medium">{{ v1_metrics.type }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Loss Function</span>
-                            <span class="text-white font-medium">{{ metrics.loss }}</span>
+                            <span id="metric-loss" class="text-white font-medium">{{ v1_metrics.loss }}</span>
                         </div>
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Loss Value</span>
-                            <span class="text-accent-green font-mono font-bold">{{ metrics.loss_value }}</span>
+                            <span id="metric-loss-value" class="text-accent-green font-mono font-bold">{{ v1_metrics.loss_value }}</span>
                         </div>
                     </div>
                 </div>
@@ -199,7 +199,7 @@
             <div class="flex flex-wrap justify-between items-center gap-3 p-8 border-b border-border-dark/50">
                 <div class="flex flex-col gap-1">
                     <p class="text-white text-3xl font-black leading-tight tracking-tight">AI ReCaptcha Solver</p>
-                    <p class="text-[#9da6b9] text-sm font-normal">Native CRNN+CTC Simulation Feed</p>
+                    <p id="feed-description" class="text-[#9da6b9] text-sm font-normal">Native CRNN+CTC Simulation Feed</p>
                 </div>
                 <div class="flex gap-3">
                     <span
@@ -303,7 +303,7 @@
                                 class="text-[10px] font-bold text-[#9da6b9] uppercase hover:text-white transition-colors">Clear</button>
                         </div>
                         <div
-                            class="flex-1 bg-background-dark border border-border-dark rounded-xl overflow-hidden flex flex-col min-h-[500px]">
+                            class="bg-background-dark border border-border-dark rounded-xl overflow-hidden flex flex-col">
                             <div
                                 class="bg-surface-dark px-4 py-2 border-b border-border-dark flex items-center justify-between">
                                 <div class="flex gap-1.5">
@@ -314,7 +314,7 @@
                                 <span class="text-[10px] font-mono text-[#9da6b9]">root@gotcha-ai: ~/session/logs</span>
                             </div>
                             <div id="terminal-content"
-                                class="flex-1 p-4 font-mono text-[11px] space-y-2 overflow-y-auto terminal-scroll">
+                                class="h-[650px] p-4 font-mono text-[11px] space-y-2 overflow-y-auto terminal-scroll">
                                 <p class="text-accent-green font-bold">>> Gotcha! AI System Started</p>
                                 <p class="text-[#9da6b9]">>> Model Status: {{ status }}</p>
                                 <p class="text-[#9da6b9]">>> Simulation Environment: READY</p>
@@ -373,7 +373,39 @@
         let selectedV2Indices = new Set();
         let currentMode = 'v1'; // 'v1' or 'v2'
 
-        // Helper: Log to terminal
+        const v1Metrics = JSON.parse('{{ v1_metrics | tojson | safe }}');
+        const v2Metrics = JSON.parse('{{ v2_metrics | tojson | safe }}');
+
+        function updateSidebarMetrics(mode) {
+            const m = mode === 'v1' ? v1Metrics : v2Metrics;
+            
+            // Labels
+            document.getElementById('metric-accuracy-label').innerText = mode === 'v1' ? 'Word Accuracy' : 'Object Accuracy';
+            document.getElementById('metric-char-accuracy-label').innerText = mode === 'v1' ? 'Character Accuracy' : 'Class Accuracy';
+            
+            // Feed Description
+            document.getElementById('feed-description').innerText = mode === 'v1' 
+                ? 'Native CRNN+CTC Simulation Feed' 
+                : 'Vision-based Object Classification Feed';
+
+            // Values
+            document.getElementById('metric-accuracy').innerText = m.accuracy || 'N/A';
+            document.getElementById('metric-char-accuracy').innerText = m.char_accuracy || 'N/A';
+            document.getElementById('metric-precision').innerText = m.precision || 'N/A';
+            document.getElementById('metric-recall').innerText = m.recall || 'N/A';
+            document.getElementById('metric-f1-score').innerText = m.f1_score || 'N/A';
+            document.getElementById('metric-type').innerText = m.type || 'N/A';
+            document.getElementById('metric-loss').innerText = m.loss || 'N/A';
+            document.getElementById('metric-loss-value').innerText = m.loss_value || 'N/A';
+
+            // Descriptions
+            document.getElementById('metric-accuracy-desc').innerText = mode === 'v1' 
+                ? 'Entire 5-character sequence must be perfect. One wrong letter = 0% success.'
+                : 'Correct identification of the target object category within the grid.';
+            document.getElementById('metric-char-accuracy-desc').innerText = mode === 'v1'
+                ? 'Percentage of individual letters correctly recognized across all samples.'
+                : 'Accuracy of the underlying classification model for all object classes.';
+        }
         function log(msg, type = 'info') {
             const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
             const p = document.createElement('p');
@@ -665,6 +697,7 @@
             v2Container.classList.add('hidden');
             v1InputGroup.classList.remove('hidden');
             log('Switched to v1: Text Captcha');
+            updateSidebarMetrics('v1');
             loadChallenge();
         };
 
@@ -678,6 +711,7 @@
             v1Container.classList.add('hidden');
             v1InputGroup.classList.add('hidden');
             log('Switched to v2: Image Select');
+            updateSidebarMetrics('v2');
             loadChallenge();
         };
 

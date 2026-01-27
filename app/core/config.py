@@ -15,7 +15,19 @@ STATE = {
     "progress": 0,
     "status": "Ready",
     "dataset_path": "",
-    "model_metadata": {
+    "v1_metadata": {
+        "accuracy": "N/A",
+        "char_accuracy": "N/A",
+        "precision": "N/A",
+        "recall": "N/A",
+        "f1_score": "N/A",
+        "loss_value": "N/A",
+        "type": "N/A",
+        "loss": "N/A",
+        "features": "N/A",
+        "preprocessing": "N/A"
+    },
+    "v2_metadata": {
         "accuracy": "N/A",
         "char_accuracy": "N/A",
         "precision": "N/A",

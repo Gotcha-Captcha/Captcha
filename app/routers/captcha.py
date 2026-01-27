@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 import shutil
 import base64
-import random
 from ..core.config import UPLOAD_DIR, get_dataset_path
 from ..services.captcha_service import predict_captcha
+from ..services.dataset_service import dataset_cache
 
 router = APIRouter()
 
@@ -22,18 +22,10 @@ async def post_predict(file: UploadFile = File(...)):
 @router.get("/api/challenge")
 async def get_challenge():
     """Fetch a random CAPTCHA challenge from the dataset."""
-    dataset_path = get_dataset_path()
-    if not dataset_path:
-        return JSONResponse({"error": "Dataset not found"}, status_code=500)
-            
-    samples_dir = Path(dataset_path)
-    all_files = list(samples_dir.glob("*.png")) + list(samples_dir.glob("*.jpg"))
-    
-    if not all_files:
+    random_file = dataset_cache.get_random_v1()
+    if not random_file:
         return JSONResponse({"error": "No CAPTCHAs found"}, status_code=404)
         
-    random_file = random.choice(all_files)
-    
     with open(random_file, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
         

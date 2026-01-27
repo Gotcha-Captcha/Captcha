@@ -7,12 +7,15 @@ import uvicorn
 
 from .core.config import STATE, UPLOAD_DIR, TEMPLATES_DIR
 from .services.metadata_service import load_metadata
+from .services.dataset_service import dataset_cache
 from .routers import captcha, captcha_v2
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Load metadata and ensure directories exist
     load_metadata()
+    dataset_cache.refresh_v1()
+    dataset_cache.refresh_v2()
     UPLOAD_DIR.mkdir(exist_ok=True)
     yield
     # Shutdown: Cleanup upload directory

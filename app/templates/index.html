@@ -375,9 +375,12 @@
 
         const v1Metrics = JSON.parse('{{ v1_metrics | tojson | safe }}');
         const v2Metrics = JSON.parse('{{ v2_metrics | tojson | safe }}');
+        const initialStatus = '{{ status | safe }}';
 
         function updateSidebarMetrics(mode) {
             const m = mode === 'v1' ? v1Metrics : v2Metrics;
+            
+            console.log(`Updating metrics for mode: ${mode}`, m);
             
             // Labels
             document.getElementById('metric-accuracy-label').innerText = mode === 'v1' ? 'Word Accuracy' : 'Object Accuracy';

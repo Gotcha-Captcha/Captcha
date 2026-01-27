@@ -7,7 +7,7 @@ import uvicorn
 
 from .core.config import STATE, UPLOAD_DIR, TEMPLATES_DIR
 from .services.metadata_service import load_metadata
-from .routers import captcha
+from .routers import captcha, captcha_v2
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +36,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # Include routers
 app.include_router(captcha.router)
+app.include_router(captcha_v2.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):

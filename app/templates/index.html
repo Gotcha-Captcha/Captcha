@@ -716,7 +716,10 @@
         };
 
         // Initial Load
-        window.onload = loadChallenge;
+        window.onload = () => {
+            updateSidebarMetrics('v1');
+            loadChallenge();
+        };
     </script>
 </body>
 

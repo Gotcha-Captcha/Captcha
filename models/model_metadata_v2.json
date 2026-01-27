@@ -1,0 +1,12 @@
+{
+    "accuracy": "12.34%",
+    "char_accuracy": "12.34%",
+    "precision": "0.5",
+    "recall": "0.5",
+    "f1_score": "0.5",
+    "loss_value": "0.1",
+    "type": "CNN",
+    "loss": "CrossEntropy",
+    "features": "Image Classification",
+    "preprocessing": "Resize (28x28), Normalization"
+}

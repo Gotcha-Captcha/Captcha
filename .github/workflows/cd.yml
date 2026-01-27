@@ -50,8 +50,8 @@ jobs:
             DATA_DIR="$HOME/captcha_data"
             mkdir -p $DATA_DIR
             
-            # Prune unused images and layers to free up space
-            sudo docker system prune -f
+            # Aggressively prune everything (dangling and unused) to free up maximum space
+            sudo docker system prune -a -f
             
             # Login to Docker Hub on EC2 with sudo
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin

@@ -27,22 +27,29 @@ This project underwent three major phases of technical improvement:
 
 ![Phase 3 Training History](docs/visualizations/training_history_v3.png)
 
+### Phase 4: Multi-modal Expansion (Image Select ReCAPTCHA)
+- **Goal**: Beyond text recognition, expanding to **Object Classification** based challenges.
+- **Method**: **EfficientNet-B1** backbone for 3x3 grid image classification.
+- **Integration**: Unified both Text and Image CAPTCHA into a single **FastAPI** serving platform.
+
+![Phase 4 Training History](docs/visualizations/training_history_v4.png)
 ---
 
-## 🏗️ Architecture: CRNN + CTC
+## 🏗️ Integrated Architecture: FastAPI Unified Serving
+The system is designed as a modular **FastAPI** application that serves multiple types of CAPTCHA models through a unified inference pipeline.
 
 ```mermaid
-graph LR
-    A[Input Image: 50x200] --> B[CNN: Spatial Features]
-    B --> C[Bridge: Reshape]
-    C --> D[BLSTM: Seq Modeling]
-    D --> E[CTC Loss: Alignment]
-    E --> F[Output: text]
+graph TD
+    A[Client Request] --> B[FastAPI Gateway]
+    B --> C{Captcha Type?}
+    C -- "v1 (Text)" --> D[CRNN + CTC Model]
+    C -- "v2 (Image)" --> E[EfficientNet-B1 Model]
+    D --> F[Unified Response]
+    E --> F
 ```
 
-- **Backbone**: CNN Layers for visual feature extraction.
-- **Sequence**: Bidirectional LSTM for context modeling between characters.
-- **Loss**: CTCLoss to handle unaligned sequences (crucial for CAPTCHAs with varying character widths).
+- **Inference Service**: Separate service layers for `v1` and `v2`, sharing a consistent preprocessing and logging logic.
+- **Scalable Serving**: Models and preprocessing scripts are encapsulated for seamless deployment across local and cloud environments.
 
 ## 📊 Experimental Results (Latest Run)
 
@@ -91,12 +98,18 @@ pip install -r requirements.txt
 ```
 
 ### 3. Deploy to AWS (EC2)
-The project is configured for automated deployment to **AWS EC2** via GitHub Actions & SSH.
-1. Ensure the following are set in GitHub Secrets:
-    - `EC2_HOST` (IP or DNS), `EC2_USERNAME` (e.g. `ubuntu`), `EC2_SSH_KEY` (Private Key)
-    - `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
-2. Push or merge to the **`main`** branch to trigger the CD pipeline.
-3. The workflow will build/push an image to Docker Hub and then SSH into your EC2 to restart the container on port **80**.
+The project is configured for automated deployment to **AWS EC2** via GitHub Actions & SSH. Both Text and Image CAPTCHA models are bundled into a single Docker image for unified serving.
+
+1. **Integrated Image**: A single Dockerfile handles model weights, metadata, and dependencies for all versions.
+2. **Automated CD**: Push to the `main` branch triggers the GitHub Actions pipeline.
+3. **Serving Environment**: The workflow pushes the image to Docker Hub and restarts the container on EC2 port **80**.
+
+### 4. Unified Model Deployment Pipeline
+To ensure consistent inference between development and production, we use a unified deployment script for both model versions.
+
+- **Standardized Inference**: All models use a `RecaptchaPredictor` pattern (as seen in `scripts/inference.py`) to wrap model loading and preprocessing.
+- **Metadata-Driven Dashboard**: `generate_v1_metadata.py` and `generate_v2_metadata.py` extract performance metrics, which are then used to dynamically populate the web dashboard at runtime.
+
 
 ### 3. Run Experiments
 ```bash

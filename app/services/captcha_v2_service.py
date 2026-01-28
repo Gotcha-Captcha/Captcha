@@ -10,11 +10,10 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 if torch.backends.mps.is_available():
     DEVICE = torch.device('mps')
 
-# Paths are relative to project root usually, but let's make them robust
+# Paths
 BASE_DIR = Path(__file__).parent.parent.parent
 MODEL_PATH = BASE_DIR / "models" / "cnn_best_model.pth"
 METADATA_PATH = BASE_DIR / "models" / "model_metadata_v2.json"
-CLASSES_PATH = BASE_DIR / "models" / "v2_classes.txt"
 
 class CaptchaV2Service:
     _instance = None
@@ -26,14 +25,22 @@ class CaptchaV2Service:
         return cls._instance
     
     def __init__(self):
-        if self._initialized: return
+        if self._initialized: 
+            return
         
         self.model = None
-        self.classes = []
+        self.classes = [
+            "Bicycle", "Bridge", "Bus", "Car", "Chimney", 
+            "Crosswalk", "Hydrant", "Motorcycle", "Palm", 
+            "Stair", "Traffic Light"
+        ]
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], 
+                std=[0.229, 0.224, 0.225]
+            )
         ])
         
         self.load_model()
@@ -41,38 +48,31 @@ class CaptchaV2Service:
 
     def load_model(self):
         try:
-            # Load Classes from metadata
+            # Load classes from metadata if available
             if METADATA_PATH.exists():
                 with open(METADATA_PATH, "r") as f:
                     meta = json.load(f)
-                    self.classes = meta.get("classes", [])
+                    self.classes = meta.get("classes", self.classes)
                     print(f"✅ [V2 Service] Loaded {len(self.classes)} classes from metadata")
-            
-            if not self.classes:
-                # Fallback classes (11 classes as detected in model weights)
-                self.classes = [
-                    "Bicycle", "Bridge", "Bus", "Car", "Chimney", 
-                    "Crosswalk", "Hydrant", "Motorcycle", "Other", "Palm", "Stair"
-                ]
-                print(f"⚠️ [V2 Service] Using fallback 11 classes")
 
-            # Load Model: cnn_best_model.pth is EfficientNet-B1
+            # Load Model: EfficientNet-B1 with specific classifier structure
             self.model = models.efficientnet_b1(weights=None)
-            
-            # Match the nested classifier structure found in the state_dict (classifier.1.1)
             num_ftrs = self.model.classifier[1].in_features
+            
+            # Match the exact structure used during training
             self.model.classifier[1] = nn.Sequential(
-                nn.Identity(), 
+                nn.Dropout(0.2),
                 nn.Linear(num_ftrs, len(self.classes))
             )
             
             if MODEL_PATH.exists():
                 state_dict = torch.load(MODEL_PATH, map_location=DEVICE)
+                
                 # Handle 'model.' prefix if present
                 new_state_dict = {}
                 for k, v in state_dict.items():
                     if k.startswith("model."):
-                        new_state_dict[k[6:]] = v
+                        new_state_dict[k.replace("model.", "", 1)] = v
                     else:
                         new_state_dict[k] = v
                 
@@ -94,19 +94,26 @@ class CaptchaV2Service:
         Returns the class name (str) or None if prediction fails.
         """
         if not self.model: 
-            # Try reloading if missing (e.g. usage before startup)
             self.load_model()
-            if not self.model: return None
+            if not self.model: 
+                return None
         
         try:
-            img = Image.open(img_path).convert('RGB')
-            img_tensor = self.transform(img).unsqueeze(0).to(DEVICE)
+            # Load and preprocess image
+            image = Image.open(img_path).convert('RGB')
+            image_tensor = self.transform(image).unsqueeze(0).to(DEVICE)
             
+            # Inference
             with torch.no_grad():
-                outputs = self.model(img_tensor)
-                _, pred_idx = torch.max(outputs, 1)
-                
-            return self.classes[pred_idx.item()]
+                outputs = self.model(image_tensor)
+                probabilities = torch.nn.functional.softmax(outputs, dim=1)
+                confidence, predicted_idx = torch.max(probabilities, 1)
+            
+            idx = predicted_idx.item()
+            conf_score = confidence.item() * 100
+            result_class = self.classes[idx]
+            
+            return result_class
         except Exception as e:
             print(f"❌ [V2 Service] Prediction error for {img_path}: {e}")
             return None

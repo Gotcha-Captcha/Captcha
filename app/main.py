@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 import shutil
 import uvicorn
 
-from .core.config import STATE, UPLOAD_DIR, TEMPLATES_DIR
+from .core.config import STATE, UPLOAD_DIR, TEMPLATES_DIR, STATIC_DIR
 from .services.metadata_service import load_metadata
 from .services.dataset_service import dataset_cache
 from .routers import captcha, captcha_v2
@@ -33,6 +34,9 @@ app = FastAPI(
     description="Refactored FastAPI backend for CRNN+CTC Captcha solver.",
     lifespan=lifespan
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Setup templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

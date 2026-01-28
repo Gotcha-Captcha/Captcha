@@ -26,7 +26,29 @@ def load_metadata():
             with open(v2_path, "r") as f:
                 data = json.load(f)
                 STATE["v2_metadata"].update(data)
-                print(f"✅ V2 Metadata loaded from {v2_path.name}")
+                
+                # Parse Stats for Dashboard
+                if "fold_results" in data:
+                    best_acc = 0.0
+                    avg_loss = 0.0
+                    total_folds = len(data["fold_results"])
+                    
+                    for fold in data["fold_results"]:
+                        if fold["best_val_acc"] > best_acc:
+                            best_acc = fold["best_val_acc"]
+                        
+                        # Take last validation loss as proxy
+                        if "history" in fold and "val_loss" in fold["history"]:
+                             avg_loss += fold["history"]["val_loss"][-1]
+                    
+                    if total_folds > 0:
+                        avg_loss /= total_folds
+
+                    STATE["v2_metadata"]["accuracy"] = f"{best_acc*100:.2f}%"
+                    STATE["v2_metadata"]["loss"] = f"{avg_loss:.4f}"
+                    STATE["v2_metadata"]["type"] = "EfficientNet-B0 (K-Fold)"
+                
+                print(f"✅ V2 Metadata loaded from {v2_path.name} (Acc: {STATE['v2_metadata']['accuracy']})")
         except Exception as e:
             print(f"❌ Failed to load V2 metadata: {e}")
     

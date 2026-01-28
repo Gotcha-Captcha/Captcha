@@ -1,0 +1,12 @@
+Bicycle
+Bridge
+Bus
+Car
+Chimney
+Crosswalk
+Hydrant
+Motorcycle
+Other
+Palm
+Stair
+Traffic Light

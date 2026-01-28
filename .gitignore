@@ -44,6 +44,9 @@ models/*
 !models/captcha_svm_model.pkl
 !models/label_encoder.pkl
 !models/scaler.pkl
+!models/efficientnet_v2_best.pth
+!models/v2_classes.txt
+!models/cnn_best_model.pth
 
 # Project Specific
 app/uploads/*

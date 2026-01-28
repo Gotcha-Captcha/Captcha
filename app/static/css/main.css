@@ -1,0 +1,138 @@
+/* Gotcha! AI ReCaptcha Solver - Main Stylesheet */
+
+/* Base Styles */
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+}
+
+/* Safe area support for notched devices */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left { padding-left: env(safe-area-inset-left); }
+.safe-right { padding-right: env(safe-area-inset-right); }
+
+/* Terminal Scrollbar */
+.terminal-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminal-scroll::-webkit-scrollbar-track {
+    background: #0a0c12;
+}
+
+.terminal-scroll::-webkit-scrollbar-thumb {
+    background: #282e39;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .terminal-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+}
+
+/* Scanner Animation */
+.scanner-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ff41, transparent);
+    box-shadow: 0 0 15px #00ff41;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    z-index: 10;
+    display: none;
+    animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+    from { top: 0%; }
+    to { top: 100%; }
+}
+
+/* Typing Cursor Animation */
+.typing-cursor {
+    border-right: 2px solid #4d90fe;
+    animation: blink 0.7s infinite;
+}
+
+@keyframes blink {
+    from, to { border-color: transparent; }
+    50% { border-color: #4d90fe; }
+}
+
+/* Mobile Sidebar Overlay */
+.sidebar-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile Sidebar Slide */
+.mobile-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.mobile-sidebar.active {
+    transform: translateX(0);
+}
+
+/* Touch-friendly tap states */
+.touch-active:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* Prevent text selection on mobile */
+.no-select {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Touch manipulation for grid items */
+.touch-action-manipulation {
+    touch-action: manipulation;
+}
+
+/* Responsive breakpoint for extra small screens */
+@media (max-width: 380px) {
+    .xs\:inline { display: inline; }
+}
+
+/* Improve input on mobile */
+input[type="text"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Fix iOS input zoom */
+@media screen and (max-width: 768px) {
+    input[type="text"] {
+        font-size: 16px;
+    }
+}
+
+/* Better button states for mobile */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Hide scrollbar on very small screens */
+@media (max-width: 480px) {
+    .terminal-scroll {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .terminal-scroll::-webkit-scrollbar {
+        display: none;
+    }
+}

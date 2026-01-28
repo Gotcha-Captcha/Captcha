@@ -5,6 +5,7 @@ import glob
 BASE_DIR = Path(__file__).parent.parent.parent
 UPLOAD_DIR = BASE_DIR / "app" / "uploads"
 TEMPLATES_DIR = BASE_DIR / "app" / "templates"
+STATIC_DIR = BASE_DIR / "app" / "static"
 MODELS_DIR = BASE_DIR / "models"
 
 # Global state to keep track of training

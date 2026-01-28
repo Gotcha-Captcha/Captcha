@@ -3,14 +3,20 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0a0c12" />
     <title>AI ReCaptcha Solver Dashboard</title>
+    
+    <!-- External Dependencies -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script id="tailwind-config">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <!-- Tailwind Config -->
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -31,87 +37,33 @@
             },
         }
     </script>
-    <style>
-        body {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .terminal-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .terminal-scroll::-webkit-scrollbar-track {
-            background: #0a0c12;
-        }
-
-        .terminal-scroll::-webkit-scrollbar-thumb {
-            background: #282e39;
-            border-radius: 4px;
-        }
-
-        .scanner-line {
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #00ff41, transparent);
-            box-shadow: 0 0 15px #00ff41;
-            position: absolute;
-            width: 100%;
-            top: 0;
-            z-index: 10;
-            display: none;
-            animation: scan 2s linear infinite;
-        }
-
-        @keyframes scan {
-            from {
-                top: 0%
-            }
-
-            to {
-                top: 100%
-            }
-        }
-
-        .typing-cursor {
-            border-right: 2px solid #4d90fe;
-            animation: blink 0.7s infinite;
-        }
-
-        @keyframes blink {
-
-            from,
-            to {
-                border-color: transparent
-            }
-
-            50% {
-                border-color: #4d90fe
-            }
-        }
-    </style>
+    
+    <!-- Custom Styles -->
+    <link href="/static/css/main.css" rel="stylesheet" />
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col">
+<body class="bg-background-light dark:bg-background-dark text-white min-h-screen flex flex-col overflow-hidden">
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay fixed inset-0 bg-black/60 z-40 md:hidden" onclick="toggleSidebar()"></div>
+
     <!-- TopNavBar -->
-    <header
-        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-background-dark px-10 py-3 z-30">
-        <div class="flex items-center gap-4 text-white">
-            <div class="size-6 text-primary">
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-background-dark px-4 sm:px-6 md:px-10 py-3 z-30 safe-top">
+        <div class="flex items-center gap-2 sm:gap-4 text-white">
+            <!-- Mobile Menu Button -->
+            <button id="menu-toggle" class="flex md:hidden items-center justify-center rounded-lg h-10 w-10 bg-surface-dark border border-border-dark text-white touch-active" onclick="toggleSidebar()">
+                <span class="material-symbols-outlined text-lg">menu</span>
+            </button>
+            <div class="size-5 sm:size-6 text-primary">
                 <svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z"
-                        fill="currentColor"></path>
+                    <path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
                 </svg>
             </div>
-            <h2 class="text-white text-lg font-bold leading-tight tracking-tight">Gotcha! <span
-                    class="text-primary">v2.0</span></h2>
-            <span
-                class="ml-4 px-2 py-0.5 rounded bg-accent-green/10 text-accent-green text-xs font-mono border border-accent-green/20">FastAPI:
-                ONLINE</span>
+            <h2 class="text-white text-base sm:text-lg font-bold leading-tight tracking-tight">Gotcha! <span class="text-primary">v2.0</span></h2>
+            <span class="hidden sm:inline-block ml-2 sm:ml-4 px-2 py-0.5 rounded bg-accent-green/10 text-accent-green text-xs font-mono border border-accent-green/20">FastAPI: ONLINE</span>
         </div>
-        <div class="flex flex-1 justify-end gap-8">
-            <div class="flex gap-3">
-                <button
-                    class="flex items-center justify-center rounded-lg h-10 w-10 bg-surface-dark border border-border-dark text-white hover:bg-border-dark transition-colors">
+        <div class="flex flex-1 justify-end gap-2 sm:gap-8">
+            <div class="flex gap-2 sm:gap-3">
+                <button class="flex items-center justify-center rounded-lg h-10 w-10 bg-surface-dark border border-border-dark text-white hover:bg-border-dark transition-colors touch-active">
                     <span class="material-symbols-outlined text-lg">settings</span>
                 </button>
             </div>
@@ -119,54 +71,49 @@
     </header>
 
     <div class="flex flex-1 overflow-hidden">
-        <!-- SideNavBar / Control Panel -->
-        <aside
-            class="w-80 bg-surface-dark border-r border-border-dark flex flex-col justify-between p-6 overflow-y-auto">
-            <div class="flex flex-col gap-8">
+        <!-- SideNavBar / Control Panel - Mobile Slide-in, Desktop Fixed -->
+        <aside id="sidebar" class="mobile-sidebar fixed md:relative left-0 top-0 h-full w-72 sm:w-80 bg-surface-dark border-r border-border-dark flex flex-col justify-between p-4 sm:p-6 overflow-y-auto z-50 md:z-auto md:transform-none">
+            <!-- Mobile Close Button -->
+            <button class="md:hidden absolute top-4 right-4 text-white touch-active" onclick="toggleSidebar()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div class="flex flex-col gap-6 sm:gap-8 mt-8 md:mt-0">
                 <div>
-                    <h1 class="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Model Metrics
-                    </h1>
-                    <div class="space-y-3">
-                        <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
+                    <h1 class="text-white text-xs font-bold uppercase tracking-widest mb-3 sm:mb-4 opacity-50">Model Metrics</h1>
+                    <div class="space-y-2 sm:space-y-3">
+                        <div class="p-3 sm:p-4 rounded-xl bg-background-dark border border-border-dark">
                             <div class="flex flex-col gap-1">
-                                <p id="metric-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Word Accuracy
-                                </p>
-                                <span id="metric-accuracy" class="text-primary text-lg font-bold">{{ v1_metrics.accuracy }}</span>
+                                <p id="metric-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Word Accuracy</p>
+                                <span id="metric-accuracy" class="text-primary text-base sm:text-lg font-bold">{{ v1_metrics.accuracy }}</span>
                             </div>
-                            <p id="metric-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Entire 5-character sequence must be
-                                perfect. One wrong letter = 0% success.</p>
+                            <p id="metric-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Entire 5-character sequence must be perfect. One wrong letter = 0% success.</p>
                         </div>
-                        <div class="p-4 rounded-xl bg-background-dark border border-border-dark">
+                        <div class="p-3 sm:p-4 rounded-xl bg-background-dark border border-border-dark">
                             <div class="flex flex-col gap-1">
-                                <p id="metric-char-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Character
-                                    Accuracy</p>
-                                <span id="metric-char-accuracy" class="text-accent-green text-lg font-bold">{{ v1_metrics.char_accuracy }}</span>
+                                <p id="metric-char-accuracy-label" class="text-[#9da6b9] text-[10px] font-bold uppercase tracking-tight">Character Accuracy</p>
+                                <span id="metric-char-accuracy" class="text-accent-green text-base sm:text-lg font-bold">{{ v1_metrics.char_accuracy }}</span>
                             </div>
-                            <p id="metric-char-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters
-                                correctly recognized across all samples.</p>
+                            <p id="metric-char-accuracy-desc" class="text-[10px] text-[#475569] mt-2 leading-tight">Percentage of individual letters correctly recognized across all samples.</p>
                         </div>
-                        <div class="grid grid-cols-3 gap-3">
-                            <div
-                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                        <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                            <div class="p-2 sm:p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Precision</p>
-                                <span id="metric-precision" class="text-white text-sm font-bold">{{ v1_metrics.precision }}</span>
+                                <span id="metric-precision" class="text-white text-xs sm:text-sm font-bold">{{ v1_metrics.precision }}</span>
                             </div>
-                            <div
-                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                            <div class="p-2 sm:p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">Recall</p>
-                                <span id="metric-recall" class="text-white text-sm font-bold">{{ v1_metrics.recall }}</span>
+                                <span id="metric-recall" class="text-white text-xs sm:text-sm font-bold">{{ v1_metrics.recall }}</span>
                             </div>
-                            <div
-                                class="p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
+                            <div class="p-2 sm:p-3 rounded-xl bg-background-dark border border-border-dark flex flex-col gap-1">
                                 <p class="text-[#9da6b9] text-[8px] font-bold uppercase tracking-tight">F1-Score</p>
-                                <span id="metric-f1-score" class="text-white text-sm font-bold">{{ v1_metrics.f1_score }}</span>
+                                <span id="metric-f1-score" class="text-white text-xs sm:text-sm font-bold">{{ v1_metrics.f1_score }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-4">
-                    <p class="text-white text-xs font-bold uppercase tracking-widest mb-2 opacity-50">System Info</p>
+                <div class="flex flex-col gap-3 sm:gap-4">
+                    <p class="text-white text-xs font-bold uppercase tracking-widest mb-1 sm:mb-2 opacity-50">System Info</p>
                     <div class="space-y-2">
                         <div class="flex justify-between items-center text-xs">
                             <span class="text-[#9da6b9]">Status</span>
@@ -188,7 +135,7 @@
                 </div>
             </div>
 
-            <div class="pt-6 border-t border-border-dark">
+            <div class="pt-4 sm:pt-6 border-t border-border-dark">
                 <p class="text-[10px] text-[#475569] text-center">© 2026 Captcha-Recognition Project</p>
             </div>
         </aside>
@@ -196,99 +143,76 @@
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col bg-background-dark overflow-y-auto">
             <!-- Page Heading -->
-            <div class="flex flex-wrap justify-between items-center gap-3 p-8 border-b border-border-dark/50">
+            <div class="flex flex-wrap justify-between items-center gap-2 sm:gap-3 p-4 sm:p-6 md:p-8 border-b border-border-dark/50">
                 <div class="flex flex-col gap-1">
-                    <p class="text-white text-3xl font-black leading-tight tracking-tight">AI ReCaptcha Solver</p>
-                    <p id="feed-description" class="text-[#9da6b9] text-sm font-normal">Native CRNN+CTC Simulation Feed</p>
+                    <p class="text-white text-xl sm:text-2xl md:text-3xl font-black leading-tight tracking-tight">AI ReCaptcha Solver</p>
+                    <p id="feed-description" class="text-[#9da6b9] text-xs sm:text-sm font-normal">Native CRNN+CTC Simulation Feed</p>
                 </div>
-                <div class="flex gap-3">
-                    <span
-                        class="px-3 py-1.5 rounded-lg bg-surface-dark border border-border-dark text-accent-green text-xs font-mono"
-                        id="main-status">
-                        READY
-                    </span>
+                <div class="flex gap-2 sm:gap-3">
+                    <span class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-surface-dark border border-border-dark text-accent-green text-[10px] sm:text-xs font-mono" id="main-status">READY</span>
                 </div>
             </div>
 
-            <div class="p-8 space-y-8">
+            <div class="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 md:space-y-8">
                 <!-- Main Layout Split -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8">
                     <!-- Challenge Feed -->
-                    <div class="lg:col-span-7 flex flex-col gap-6">
+                    <div class="lg:col-span-7 flex flex-col gap-4 sm:gap-6">
                         <!-- Tab System -->
-                        <div class="flex gap-2 p-1 bg-surface-dark rounded-lg border border-border-dark w-fit">
-                            <button id="tab-v1"
-                                class="px-4 py-2 rounded-md bg-primary text-white text-xs font-bold transition-all">v1:
-                                Text Captcha</button>
-                            <button id="tab-v2"
-                                class="px-4 py-2 rounded-md text-[#9da6b9] text-xs font-bold hover:text-white transition-all">
-                                v2: Image Select
-                            </button>
+                        <div class="flex gap-1 sm:gap-2 p-1 bg-surface-dark rounded-lg border border-border-dark w-full sm:w-fit">
+                            <button id="tab-v1" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md bg-primary text-white text-[10px] sm:text-xs font-bold transition-all touch-active no-select">v1: Text Captcha</button>
+                            <button id="tab-v2" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-[#9da6b9] text-[10px] sm:text-xs font-bold hover:text-white transition-all touch-active no-select">v2: Image Select</button>
                         </div>
 
                         <div class="flex items-center justify-between">
-                            <h2 class="text-white text-xl font-bold tracking-tight flex items-center gap-2">
+                            <h2 class="text-white text-base sm:text-lg md:text-xl font-bold tracking-tight flex items-center gap-2">
                                 <span class="relative flex h-2 w-2">
-                                    <span
-                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                                 </span>
                                 Active Challenge
                             </h2>
-                            <button id="refresh-challenge"
-                                class="text-xs font-mono text-primary hover:text-white transition-colors flex items-center gap-1">
-                                <span class="material-symbols-outlined text-sm">refresh</span> REGENERATE
+                            <button id="refresh-challenge" class="text-[10px] sm:text-xs font-mono text-primary hover:text-white transition-colors flex items-center gap-1 touch-active min-h-[44px] px-2">
+                                <span class="material-symbols-outlined text-sm">refresh</span> <span class="hidden xs:inline">REGENERATE</span>
                             </button>
                         </div>
 
                         <!-- v1: Text Captcha Container -->
-                        <div id="v1-container"
-                            class="relative bg-surface-dark rounded-xl border border-border-dark shadow-inner overflow-hidden min-h-[140px] flex items-center justify-center p-4 group">
-                            <div
-                                class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent">
-                            </div>
-                            <img id="challenge-img" src=""
-                                class="h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(19,91,236,0.3)] z-10"
-                                alt="Challenge" />
+                        <div id="v1-container" class="relative bg-surface-dark rounded-xl border border-border-dark shadow-inner overflow-hidden min-h-[100px] sm:min-h-[140px] flex items-center justify-center p-3 sm:p-4 group">
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
+                            <img id="challenge-img" src="" class="h-12 sm:h-16 w-auto object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(19,91,236,0.3)] z-10" alt="Challenge" />
                             <div id="v1-scanner" class="scanner-line z-20"></div>
                         </div>
 
                         <!-- v2: Image Select Container -->
-                        <div id="v2-container" class="hidden flex flex-col gap-4 max-w-sm mx-auto">
-                            <div class="bg-primary p-4 rounded-lg flex flex-col gap-1 shadow-lg shadow-primary/20">
-                                <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Select all images
-                                    with</p>
-                                <h3 id="v2-target-name" class="text-2xl font-black uppercase tracking-tight">---</h3>
+                        <div id="v2-container" class="hidden flex flex-col gap-3 sm:gap-4 w-full max-w-sm mx-auto">
+                            <div class="bg-primary p-3 sm:p-4 rounded-lg flex flex-col gap-1 shadow-lg shadow-primary/20">
+                                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-80">Select all images with</p>
+                                <h3 id="v2-target-name" class="text-xl sm:text-2xl font-black uppercase tracking-tight">---</h3>
                             </div>
-                            <div id="v2-grid"
-                                class="grid grid-cols-3 gap-2 bg-surface-dark p-2 rounded-xl border border-border-dark relative">
+                            <div id="v2-grid" class="grid grid-cols-3 gap-1 sm:gap-2 bg-surface-dark p-1.5 sm:p-2 rounded-xl border border-border-dark relative">
                                 <!-- Grid items will be injected here -->
                                 <div id="v2-scanner" class="scanner-line z-20"></div>
                             </div>
                         </div>
 
                         <!-- Solver Controls -->
-                        <div class="bg-surface-dark border border-border-dark rounded-xl p-6 space-y-4">
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
                             <div id="v1-input-group" class="space-y-2">
                                 <div class="flex justify-between items-end">
-                                    <label class="text-[10px] font-bold text-[#9da6b9] uppercase tracking-widest">Input
-                                        Buffer</label>
-                                    <span id="solver-status" class="text-[10px] text-accent-green font-mono">IDLE</span>
+                                    <label class="text-[9px] sm:text-[10px] font-bold text-[#9da6b9] uppercase tracking-widest">Input Buffer</label>
+                                    <span id="solver-status" class="text-[9px] sm:text-[10px] text-accent-green font-mono">IDLE</span>
                                 </div>
-                                <input type="text" id="captcha-solve-input"
-                                    class="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-4 text-white text-4xl font-black tracking-[0.3em] focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-border-dark"
-                                    placeholder="-----">
+                                <input type="text" id="captcha-solve-input" class="w-full bg-background-dark border border-border-dark rounded-lg px-3 sm:px-4 py-3 sm:py-4 text-white text-2xl sm:text-3xl md:text-4xl font-black tracking-[0.2em] sm:tracking-[0.3em] focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-border-dark" placeholder="-----" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                             </div>
 
-                            <div class="flex gap-3">
-                                <button id="btn-auto-solve"
-                                    class="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-lg text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
-                                    <span class="material-symbols-outlined">psychology</span>
+                            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                <button id="btn-auto-solve" class="flex-1 flex items-center justify-center gap-2 bg-primary text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg text-xs sm:text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20 touch-active min-h-[48px]">
+                                    <span class="material-symbols-outlined text-lg sm:text-xl">psychology</span>
                                     AI AUTO-SOLVE
                                 </button>
-                                <button id="btn-verify-solve"
-                                    class="flex-1 flex items-center justify-center gap-2 bg-accent-green text-black px-6 py-4 rounded-lg text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-accent-green/20">
-                                    <span class="material-symbols-outlined">verified</span>
+                                <button id="btn-verify-solve" class="flex-1 flex items-center justify-center gap-2 bg-accent-green text-black px-4 sm:px-6 py-3 sm:py-4 rounded-lg text-xs sm:text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-accent-green/20 touch-active min-h-[48px]">
+                                    <span class="material-symbols-outlined text-lg sm:text-xl">verified</span>
                                     VERIFY & SUBMIT
                                 </button>
                             </div>
@@ -296,25 +220,21 @@
                     </div>
 
                     <!-- Log Terminal -->
-                    <div class="lg:col-span-5 flex flex-col gap-4">
+                    <div class="lg:col-span-5 flex flex-col gap-3 sm:gap-4">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-white text-xl font-bold tracking-tight">System Terminal</h2>
-                            <button id="clear-terminal"
-                                class="text-[10px] font-bold text-[#9da6b9] uppercase hover:text-white transition-colors">Clear</button>
+                            <h2 class="text-white text-base sm:text-lg md:text-xl font-bold tracking-tight">System Terminal</h2>
+                            <button id="clear-terminal" class="text-[10px] font-bold text-[#9da6b9] uppercase hover:text-white transition-colors touch-active min-h-[44px] px-2">Clear</button>
                         </div>
-                        <div
-                            class="bg-background-dark border border-border-dark rounded-xl overflow-hidden flex flex-col">
-                            <div
-                                class="bg-surface-dark px-4 py-2 border-b border-border-dark flex items-center justify-between">
+                        <div class="bg-background-dark border border-border-dark rounded-xl overflow-hidden flex flex-col">
+                            <div class="bg-surface-dark px-3 sm:px-4 py-2 border-b border-border-dark flex items-center justify-between">
                                 <div class="flex gap-1.5">
-                                    <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
-                                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
-                                    <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                                    <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-red-500/50"></div>
+                                    <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-yellow-500/50"></div>
+                                    <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-green-500/50"></div>
                                 </div>
-                                <span class="text-[10px] font-mono text-[#9da6b9]">root@gotcha-ai: ~/session/logs</span>
+                                <span class="text-[9px] sm:text-[10px] font-mono text-[#9da6b9] truncate ml-2">root@gotcha-ai: ~/logs</span>
                             </div>
-                            <div id="terminal-content"
-                                class="h-[650px] p-4 font-mono text-[11px] space-y-2 overflow-y-auto terminal-scroll">
+                            <div id="terminal-content" class="h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px] xl:h-[650px] p-3 sm:p-4 font-mono text-[10px] sm:text-[11px] space-y-1.5 sm:space-y-2 overflow-y-auto terminal-scroll">
                                 <p class="text-accent-green font-bold">>> Gotcha! AI System Started</p>
                                 <p class="text-[#9da6b9]">>> Model Status: {{ status }}</p>
                                 <p class="text-[#9da6b9]">>> Simulation Environment: READY</p>
@@ -326,404 +246,30 @@
         </main>
     </div>
 
-
     <!-- Status Bar -->
-    <footer class="bg-surface-dark border-t border-border-dark px-6 py-2 flex items-center justify-between z-30">
-        <div class="flex items-center gap-6 text-[10px] font-mono text-[#9da6b9]">
-            <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-accent-green shadow-[0_0_5px_#00ff41]"></span>
-                ENGINE: ACTIVE
+    <footer class="bg-surface-dark border-t border-border-dark px-3 sm:px-6 py-2 flex items-center justify-between z-30 safe-bottom">
+        <div class="flex items-center gap-3 sm:gap-6 text-[9px] sm:text-[10px] font-mono text-[#9da6b9]">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-accent-green shadow-[0_0_5px_#00ff41]"></span>
+                <span class="hidden xs:inline">ENGINE:</span> ACTIVE
             </div>
             <div class="hidden md:flex items-center gap-2 border-l border-border-dark pl-6">
                 <span class="material-symbols-outlined text-[12px]">memory</span>
                 INFERENCE UNIT: GPU-0
             </div>
         </div>
-        <div class="text-[10px] font-mono text-primary font-bold">
-            BUILD: v2.0.4-STABLE
-        </div>
+        <div class="text-[9px] sm:text-[10px] font-mono text-primary font-bold">v2.0.4</div>
     </footer>
 
+    <!-- Server-Side Data Injection -->
     <script>
-        // DOM Elements
-        const terminalContent = document.getElementById('terminal-content');
-        const clearTerminal = document.getElementById('clear-terminal');
-        const mainStatus = document.getElementById('main-status');
-
-        const v1Container = document.getElementById('v1-container');
-        const v2Container = document.getElementById('v2-container');
-        const challengeImg = document.getElementById('challenge-img');
-        const v1Scanner = document.getElementById('v1-scanner');
-        const v2Scanner = document.getElementById('v2-scanner');
-        const v2TargetName = document.getElementById('v2-target-name');
-        const v2Grid = document.getElementById('v2-grid');
-        const v1InputGroup = document.getElementById('v1-input-group');
-
-        const captchaInput = document.getElementById('captcha-solve-input');
-        const btnAutoSolve = document.getElementById('btn-auto-solve');
-        const btnVerify = document.getElementById('btn-verify-solve');
-        const refreshChallenge = document.getElementById('refresh-challenge');
-        const solverStatus = document.getElementById('solver-status');
-
-        const tabV1 = document.getElementById('tab-v1');
-        const tabV2 = document.getElementById('tab-v2');
-
-        let currentChallengeId = null; // for v1
-        let currentV2Challenge = null; // { target, grid: [{image, id}] }
-        let selectedV2Indices = new Set();
-        let currentMode = 'v1'; // 'v1' or 'v2'
-
-        const v1Metrics = JSON.parse('{{ v1_metrics | tojson | safe }}');
-        const v2Metrics = JSON.parse('{{ v2_metrics | tojson | safe }}');
-        const initialStatus = '{{ status | safe }}';
-
-        function updateSidebarMetrics(mode) {
-            const m = mode === 'v1' ? v1Metrics : v2Metrics;
-            
-            console.log(`Updating metrics for mode: ${mode}`, m);
-            
-            // Labels
-            document.getElementById('metric-accuracy-label').innerText = mode === 'v1' ? 'Word Accuracy' : 'Object Accuracy';
-            document.getElementById('metric-char-accuracy-label').innerText = mode === 'v1' ? 'Character Accuracy' : 'Class Accuracy';
-            
-            // Feed Description
-            document.getElementById('feed-description').innerText = mode === 'v1' 
-                ? 'Native CRNN+CTC Simulation Feed' 
-                : 'Vision-based Object Classification Feed';
-
-            // Values
-            document.getElementById('metric-accuracy').innerText = m.accuracy || 'N/A';
-            document.getElementById('metric-char-accuracy').innerText = m.char_accuracy || 'N/A';
-            document.getElementById('metric-precision').innerText = m.precision || 'N/A';
-            document.getElementById('metric-recall').innerText = m.recall || 'N/A';
-            document.getElementById('metric-f1-score').innerText = m.f1_score || 'N/A';
-            document.getElementById('metric-type').innerText = m.type || 'N/A';
-            document.getElementById('metric-loss').innerText = m.loss || 'N/A';
-            document.getElementById('metric-loss-value').innerText = m.loss_value || 'N/A';
-
-            // Descriptions
-            document.getElementById('metric-accuracy-desc').innerText = mode === 'v1' 
-                ? 'Entire 5-character sequence must be perfect. One wrong letter = 0% success.'
-                : 'Correct identification of the target object category within the grid.';
-            document.getElementById('metric-char-accuracy-desc').innerText = mode === 'v1'
-                ? 'Percentage of individual letters correctly recognized across all samples.'
-                : 'Accuracy of the underlying classification model for all object classes.';
-        }
-        function log(msg, type = 'info') {
-            const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-            const p = document.createElement('p');
-            const typeColor = type === 'success' ? 'text-accent-green' : type === 'error' ? 'text-red-500' : 'text-primary';
-            p.innerHTML = `<span class="text-[#9da6b9]">[${time}]</span> <span class="${typeColor} font-bold">${type.toUpperCase()}:</span> ${msg}`;
-            terminalContent.appendChild(p);
-            terminalContent.scrollTop = terminalContent.scrollHeight;
-        }
-
-        clearTerminal.onclick = () => terminalContent.innerHTML = '<p class="text-accent-green font-bold">>> Console session cleared</p>';
-
-        // --- Challenge Logic ---
-        async function loadChallenge() {
-            if (currentMode === 'v1') {
-                await loadChallengeV1();
-            } else {
-                await loadChallengeV2();
-            }
-        }
-
-        async function loadChallengeV1() {
-            log('Requesting new v1 challenge...');
-            v1Scanner.style.display = 'block';
-            mainStatus.innerText = 'FETCHING';
-
-            try {
-                const response = await fetch('/api/challenge');
-                const data = await response.json();
-                challengeImg.src = data.image;
-                currentChallengeId = data.challenge_id;
-                captchaInput.value = "";
-                solverStatus.innerText = "READY";
-                log(`Challenge loaded: ${currentChallengeId}`, 'success');
-            } catch (err) {
-                log(`Failed to load v1 challenge: ${err.message}`, 'error');
-            } finally {
-                v1Scanner.style.display = 'none';
-                mainStatus.innerText = 'READY';
-            }
-        }
-
-        async function loadChallengeV2() {
-            log('Requesting new v2 challenge...');
-            v2Scanner.style.display = 'block';
-            mainStatus.innerText = 'FETCHING';
-            selectedV2Indices.clear();
-
-            try {
-                const response = await fetch('/api/v2/challenge');
-                const data = await response.json();
-                currentV2Challenge = data;
-                v2TargetName.innerText = data.target;
-
-                // Clear and render grid
-                renderV2Grid(data.grid);
-
-                solverStatus.innerText = "READY";
-                log(`v2 Challenge loaded. Target: ${data.target}`, 'success');
-            } catch (err) {
-                log(`Failed to load v2 challenge: ${err.message}`, 'error');
-            } finally {
-                v2Scanner.style.display = 'none';
-                mainStatus.innerText = 'READY';
-            }
-        }
-
-        function renderV2Grid(grid) {
-            // Keep scanner, remove other children
-            const children = Array.from(v2Grid.children);
-            children.forEach(c => { if (c.id !== 'v2-scanner') v2Grid.removeChild(c); });
-
-            grid.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = "relative aspect-square bg-background-dark border border-border-dark cursor-pointer overflow-hidden group transition-all duration-300 hover:border-primary";
-                div.innerHTML = `
-                    <img src="data:image/jpeg;base64,${item.image}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div class="absolute inset-0 bg-primary/20 opacity-0 transition-opacity duration-300 select-overlay"></div>
-                    <div class="absolute top-1 right-1 bg-primary text-white rounded-full size-5 flex items-center justify-center opacity-0 transition-all duration-300 transform scale-50 select-check">
-                        <span class="material-symbols-outlined text-xs">done</span>
-                    </div>
-                `;
-                div.onclick = () => toggleV2Selection(div, index);
-                v2Grid.appendChild(div);
-            });
-        }
-
-        function toggleV2Selection(el, index) {
-            const overlay = el.querySelector('.select-overlay');
-            const check = el.querySelector('.select-check');
-
-            if (selectedV2Indices.has(index)) {
-                selectedV2Indices.delete(index);
-                overlay.style.opacity = '0';
-                check.style.opacity = '0';
-                check.style.transform = 'scale(0.5)';
-                el.classList.remove('ring-4', 'ring-primary', 'ring-inset');
-            } else {
-                selectedV2Indices.add(index);
-                overlay.style.opacity = '1';
-                check.style.opacity = '1';
-                check.style.transform = 'scale(1)';
-                el.classList.add('ring-4', 'ring-primary', 'ring-inset');
-            }
-            log(`Index ${index} ${selectedV2Indices.has(index) ? 'selected' : 'deselected'}`);
-        }
-
-        refreshChallenge.onclick = loadChallenge;
-
-        btnAutoSolve.onclick = async () => {
-            if (currentMode === 'v1') {
-                await autoSolveV1();
-            } else {
-                await autoSolveV2();
-            }
-        };
-
-        async function autoSolveV1() {
-            if (!currentChallengeId) return;
-            btnAutoSolve.disabled = true;
-            log('Initializing AI solving unit...', 'info');
-            solverStatus.innerText = "ANALYZING...";
-            mainStatus.innerText = 'SOLVING';
-
-            try {
-                const response = await fetch('/api/solve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ challenge_id: currentChallengeId })
-                });
-                const data = await response.json();
-                captchaInput.value = "";
-                captchaInput.classList.add('typing-cursor');
-                for (let char of data.prediction) {
-                    captchaInput.value += char;
-                    await new Promise(r => setTimeout(r, 100));
-                }
-                captchaInput.classList.remove('typing-cursor');
-                log(`AI solve generated: "${data.prediction}"`, 'success');
-                solverStatus.innerText = "SOLVE COMPLETE";
-            } catch (error) {
-                log('AI solving unit failed', 'error');
-                solverStatus.innerText = "ERROR";
-            } finally {
-                btnAutoSolve.disabled = false;
-                mainStatus.innerText = 'READY';
-            }
-        }
-
-        async function autoSolveV2() {
-            if (!currentV2Challenge) return;
-            btnAutoSolve.disabled = true;
-            log('Initializing Vision AI to scan grid...', 'info');
-            solverStatus.innerText = "SCANNING...";
-            mainStatus.innerText = 'SOLVING';
-
-            try {
-                const response = await fetch('/api/v2/solve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        target: currentV2Challenge.target,
-                        grid_ids: currentV2Challenge.grid.map(g => g.id)
-                    })
-                });
-                const data = await response.json();
-
-                // Clear current and apply AI selection
-                selectedV2Indices.clear();
-                const gridItems = Array.from(v2Grid.children).filter(c => c.id !== 'v2-scanner');
-
-                // Visual feedback: click one by one
-                for (let idx of data.correct_indices) {
-                    toggleV2Selection(gridItems[idx], idx);
-                    await new Promise(r => setTimeout(r, 200));
-                }
-
-                log(`AI scan complete. Selected ${data.correct_indices.length} matches.`, 'success');
-                solverStatus.innerText = "SCAN COMPLETE";
-            } catch (error) {
-                log('Vison AI failed', 'error');
-                solverStatus.innerText = "ERROR";
-            } finally {
-                btnAutoSolve.disabled = false;
-                mainStatus.innerText = 'READY';
-            }
-        }
-
-        btnVerify.onclick = async () => {
-            if (currentMode === 'v1') {
-                await verifyV1();
-            } else {
-                await verifyV2();
-            }
-        };
-
-        async function verifyV1() {
-            const userInput = captchaInput.value;
-            if (!userInput || !currentChallengeId) return;
-            log('Initiating validation check...');
-            mainStatus.innerText = 'VERIFYING';
-
-            try {
-                const response = await fetch('/api/verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ challenge_id: currentChallengeId, user_input: userInput })
-                });
-                const data = await response.json();
-                handleVerifyResult(data.is_correct, data.true_label);
-            } catch (err) {
-                log(`Verification failed: ${err.message}`, 'error');
-            }
-        }
-
-        async function verifyV2() {
-            if (!currentV2Challenge) return;
-            log('Verifying grid selection with server...');
-            mainStatus.innerText = 'VERIFYING';
-
-            const selectedIds = Array.from(selectedV2Indices).map(idx => currentV2Challenge.grid[idx].id);
-
-            try {
-                const response = await fetch('/api/v2/verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        target: currentV2Challenge.target,
-                        grid_ids: currentV2Challenge.grid.map(g => g.id),
-                        selected_ids: selectedIds
-                    })
-                });
-                const data = await response.json();
-                handleVerifyResult(data.is_correct, `Matches: ${data.actual_ids.length}`);
-            } catch (err) {
-                log(`v2 Verification failed: ${err.message}`, 'error');
-            }
-        }
-
-        function handleVerifyResult(isCorrect, infoText) {
-            const v1Box = v1Container;
-            const v2Box = v2Grid;
-            const targetBoxes = [v1Box, v2Box];
-
-            if (isCorrect) {
-                log(`SUCCESS: ${infoText}`, 'success');
-                solverStatus.innerText = "PASSED";
-                mainStatus.innerText = 'SUCCESS';
-
-                targetBoxes.forEach(box => {
-                    box.classList.add('border-accent-green', 'ring-2', 'ring-accent-green/20');
-                    box.classList.remove('border-border-dark');
-                });
-
-                setTimeout(() => {
-                    targetBoxes.forEach(box => {
-                        box.classList.remove('border-accent-green', 'ring-2', 'ring-accent-green/20');
-                        box.classList.add('border-border-dark');
-                    });
-                    loadChallenge();
-                }, 2000);
-            } else {
-                log(`FAILURE: ${infoText}`, 'error');
-                solverStatus.innerText = "FAILED";
-                mainStatus.innerText = 'FAILED';
-
-                targetBoxes.forEach(box => {
-                    box.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
-                    box.classList.remove('border-border-dark');
-                });
-
-                setTimeout(() => {
-                    mainStatus.innerText = 'READY';
-                    targetBoxes.forEach(box => {
-                        box.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
-                        box.classList.add('border-border-dark');
-                    });
-                }, 1000);
-            }
-        }
-
-        // Tab Switching Logic
-        tabV1.onclick = () => {
-            currentMode = 'v1';
-            tabV1.classList.add('bg-primary', 'text-white');
-            tabV1.classList.remove('text-[#9da6b9]');
-            tabV2.classList.remove('bg-primary', 'text-white');
-            tabV2.classList.add('text-[#9da6b9]');
-            v1Container.classList.remove('hidden');
-            v2Container.classList.add('hidden');
-            v1InputGroup.classList.remove('hidden');
-            log('Switched to v1: Text Captcha');
-            updateSidebarMetrics('v1');
-            loadChallenge();
-        };
-
-        tabV2.onclick = () => {
-            currentMode = 'v2';
-            tabV2.classList.add('bg-primary', 'text-white');
-            tabV2.classList.remove('text-[#9da6b9]');
-            tabV1.classList.remove('bg-primary', 'text-white');
-            tabV1.classList.add('text-[#9da6b9]');
-            v2Container.classList.remove('hidden');
-            v1Container.classList.add('hidden');
-            v1InputGroup.classList.add('hidden');
-            log('Switched to v2: Image Select');
-            updateSidebarMetrics('v2');
-            loadChallenge();
-        };
-
-        // Initial Load
-        window.onload = () => {
-            updateSidebarMetrics('v1');
-            loadChallenge();
-        };
+        window.v1Metrics = JSON.parse('{{ v1_metrics | tojson | safe }}');
+        window.v2Metrics = JSON.parse('{{ v2_metrics | tojson | safe }}');
+        window.initialStatus = '{{ status | safe }}';
     </script>
+    
+    <!-- Application Script -->
+    <script src="/static/js/app.js"></script>
 </body>
 
 </html>

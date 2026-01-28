@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from ..services.dataset_service import dataset_cache
+from ..services.captcha_v2_service import captcha_v2_service
 
 router = APIRouter(prefix="/api/v2")
 
@@ -32,18 +33,42 @@ async def get_challenge():
         "grid": grid_with_images
     }
 
+# ============================
+# Model Integration
+# ============================
+from ..services.captcha_v2_service import captcha_v2_service
+
+@router.on_event("startup")
+async def load_v2_model():
+    captcha_v2_service.load_model()
+
 @router.post("/solve")
 async def solve_v2(request: Request):
-    """Simulate AI solving the 3x3 grid."""
+    """Real AI solving the 3x3 grid using EfficientNet."""
     data = await request.json()
-    grid_ids = data.get("grid_ids", []) # IDs of images currently in the grid
+    grid_ids = data.get("grid_ids", []) 
     target_name = data.get("target")
     
-    if target_name not in dataset_cache.v2_data:
-        return {"correct_indices": []}
-
-    target_files = set(dataset_cache.v2_data[target_name])
-    correct_indices = [idx for idx, img_id in enumerate(grid_ids) if img_id in target_files]
+    correct_indices = []
+    
+    # Reverse lookup map (ID -> Path)
+    id_to_path = {}
+    for cat, ids in dataset_cache.v2_data.items():
+        for img_id in ids:
+            id_to_path[img_id] = dataset_cache.v2_root / cat / img_id
+            
+    for idx, img_id in enumerate(grid_ids):
+        if img_id not in id_to_path:
+            continue
+            
+        img_path = id_to_path[img_id]
+        predicted_class = captcha_v2_service.predict(img_path)
+        
+        # Determine match
+        # Note: predicted_class is singular (e.g. 'bus'), target_name is 'bus'.
+        # Exact match.
+        if predicted_class and predicted_class.lower() == target_name.lower():
+            correct_indices.append(idx)
             
     return {"correct_indices": correct_indices}
 

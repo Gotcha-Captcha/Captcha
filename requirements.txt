@@ -17,3 +17,7 @@ websockets
 # ML Production (CPU optimized)
 torch --index-url https://download.pytorch.org/whl/cpu
 torchinfo
+torchvision
+mlflow
+opencv-python
+accelerate
